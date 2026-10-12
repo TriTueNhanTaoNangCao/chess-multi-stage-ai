@@ -1,0 +1,6 @@
+chess>=1.9.0
+pygame>=2.5.0
+numpy>=1.24.0
+torch>=2.0.0
+colorama>=0.4.6
+pytest>=7.0.0
