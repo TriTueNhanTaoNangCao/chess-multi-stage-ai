@@ -12,7 +12,7 @@ class AgentTests(unittest.TestCase):
         for text in ["e4","e5","Nf3","Nc6"]:
             board.step(text)
         before = (board.fen(), list(board.board.move_stack))
-        for key in AGENT_REGISTRY:
+        for key in CLASSIC_AGENTS:
             agent = build_agent(key, 2, 7)
             with self.subTest(agent=key):
                 self.assertIn(agent.act(board), board.legal_moves)
@@ -20,9 +20,15 @@ class AgentTests(unittest.TestCase):
 
     def test_every_agent_rejects_terminal(self):
         board = ChessBoard("7k/8/8/8/8/8/8/K7 w - - 0 1")
-        for key in AGENT_REGISTRY:
+        for key in CLASSIC_AGENTS:
             with self.assertRaises(ValueError):
                 build_agent(key,1,7).act(board)
+
+    def test_registry_lists_all_agents(self):
+        self.assertIn("supervised", AGENT_REGISTRY)
+        self.assertEqual(set(AGENT_REGISTRY.keys()), set(CLASSIC_AGENTS) | {"supervised"})
+        with self.assertRaises(ValueError):
+            build_agent("supervised", 2, 7)
 
     def test_mate_in_one_both_colors(self):
         position = chess.Board("7k/5Q2/6K1/8/8/8/8/8 w - - 0 1")

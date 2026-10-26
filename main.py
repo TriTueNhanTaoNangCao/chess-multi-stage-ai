@@ -20,7 +20,7 @@ def run_cli(args):
     from time import perf_counter
     just_fix_windows_console()
     board = ChessBoard(args.fen)
-    bot = build_agent(args.agent, args.depth, args.seed)
+    bot = build_agent(args.agent, args.depth, args.seed, checkpoint=getattr(args, "checkpoint", None))
     human = HumanAgent()
     human_color = args.side == "white"
     ascii_only = args.ascii or needs_ascii(sys.stdout)
@@ -61,10 +61,18 @@ def main(argv=None):
     parser.add_argument("--side", choices=("white","black"), default="white")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--fen", default=None)
+    parser.add_argument(
+        "--checkpoint",
+        default=None,
+        help=("Path to model checkpoint (required for supervised agent; "
+              "Stage 4 baseline: checkpoints/stage4/best_lichess.pt)"),
+    )
     parser.add_argument("--ascii", action="store_true", help="ASCII pieces for terminals without chess glyphs")
     args = parser.parse_args(argv)
     if args.depth < 1:
         parser.error("--depth must be >=1")
+    if args.agent == "supervised" and not args.checkpoint:
+        parser.error("--checkpoint is required when using supervised agent")
     try:
         initial_board = ChessBoard(args.fen)
     except ValueError as exc:

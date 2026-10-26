@@ -1,0 +1,18 @@
+{
+  "source_page": "https://database.nikonoel.fr/",
+  "download_url": "https://database.nikonoel.fr/lichess_elite_2023-02.zip",
+  "month": "2023-02",
+  "published_compressed_size": "64 MB",
+  "archive": {
+    "path": "data/survey/lichess_elite/lichess_elite_2023-02.zip",
+    "bytes": 63488313,
+    "sha256": "7930206efa17b98472187475fcc6e39f14fdab66c520106b3295f4dd1966f38b",
+    "within_100_mib_limit": true
+  },
+  "extracted_pgn": {
+    "path": "data/survey/lichess_elite/lichess_elite_2023-02.pgn",
+    "bytes": 209881676,
+    "sha256": "809307b24f2082816821092c669be1882ba8c2016c9cc78790df4d8129581c74",
+    "within_1_gib_limit": true
+  }
+}

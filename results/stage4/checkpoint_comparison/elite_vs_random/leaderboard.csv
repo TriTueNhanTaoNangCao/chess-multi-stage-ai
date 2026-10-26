@@ -1,0 +1,3 @@
+agent,elo,games,wins,draws,losses,win_rate,draw_rate,score_rate,ms_per_move
+EliteStage4,1224.8957074620894,10,3,7,0,0.3,0.7,0.65,5.298022493385794
+Random,1175.1042925379106,10,0,7,3,0.0,0.7,0.35,0.6230169862360464

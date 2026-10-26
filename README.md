@@ -12,7 +12,7 @@ Kiến trúc kế thừa cách tổ chức của `connect4-multi-stage-ai`, chuy
 | :--- | :--- | :--- | :---: |
 | **Thắng** | **Core Base**: kiến trúc, board, encoder<br>**GUI & CLI**: Pygame Dashboard, Terminal<br>**Arena**: 1v1, round-robin, Elo<br>**Stage 1**: Think1, Think2, Think3<br>**Stage 2**: Minimax, Alpha-Beta, Quiescence<br>Kiểm thử, tài liệu tích hợp | `games/`<br>`arena/`<br>`agents/stage1_heuristics/`<br>`agents/stage2_tree_search/`<br>`tests/`, `main.py` | ✅ **Đã triển khai; 61 test đạt** |
 | **Thi** | **Stage 3**: Pure MCTS — UCB1, Expansion, Rollout, Backprop | `agents/stage3_mcts_pure/` | ⏳ Cần làm tiếp theo |
-| **Thái** | **Stage 4**: SL CNN từ PGN / expert data<br>**Stage 5**: REINFORCE & Value Net | `agents/stage4_supervised/`<br>`agents/stage5_rl/`<br>`training/` | ⏳ Chờ Stage 3 |
+| **Thái** | **Stage 4**: SL CNN từ PGN / expert data<br>**Stage 5**: REINFORCE & Value Net | `agents/stage4_supervised/`<br>`agents/stage5_rl/`<br>`training/` | ✅ Stage 4 baseline Lichess<br>⏳ Stage 5 |
 | **Tùng** | **Stage 6**: AlphaGo MCTS — prior + value<br>**Stage 7**: AlphaZero — Dual-Head ResNet, PUCT, self-play | `agents/stage6_alphago/`<br>`agents/stage7_alphazero/`<br>`models/` | ⏳ Chờ Stage 4, 5 |
 
 **Nghiệm thu phần Thắng:** 61 kiểm thử tự động qua cả unittest và pytest; GUI được render và kiểm tra bằng SDL headless; giải vòng tròn thực tế 30 ván, không có nước phạm luật hoặc lỗi bot. Xem [biên bản QA](docs/QA.md) và [hợp đồng bàn giao Stage 3–7](docs/HANDOFF.md). Các test đạt không bảo đảm không còn lỗi ở mọi thế cờ.
@@ -221,6 +221,22 @@ Tensor 14 kênh **không đủ khôi phục toàn bộ luật**: thiếu quyền
 `encode_board_tensor()` lazy-import Torch, chuyển sang **(1,14,8,8)** NCHW. Action space 4672 = 64×73: 56 queen-like, 8 knight, 9 underpromotion. Action định hướng theo bên đang đi (Đen lật rank); tensor trạng thái dùng góc nhìn Trắng cố định. Castling/en-passant là nước hình học tương ứng, phong Hậu dùng plane queen-like. `decode_move(index, board)` trả Move hợp lệ hoặc None; legal mask gồm 4672 phần tử. Mask/indices rỗng và decoder trả None khi terminal. Wrapper dùng `board.claim_draw`; raw board mặc định tự nhận hòa (`claim_draw=True`), có thể override bằng keyword `claim_draw=False`.
 
 Đây là encoder đơn giản của dự án, **không phải đầy đủ biểu diễn lịch sử của AlphaZero gốc**. Tùng/Thái cần version hóa encoder và checkpoint nếu bổ sung history/castling planes; checkpoint từ encoder 18 kênh bản nháp không tương thích.
+
+### Stage 4 baseline: Lichess Elite
+
+Baseline hiện tại dùng **Lichess Elite 02/2023**: reservoir sampling seed 42 lấy 10.000 ván, lọc còn 9.886 ván. Split theo ván train/validation/test là 7.908/988/990, tương ứng 672.839/83.808/85.364 mẫu. Dataset trên Kaggle lưu thành các mảng NPY để memory-map; truyền thư mục dataset bằng `--dataset_dir`, không hard-code Kaggle input root. Loader vẫn tương thích NPZ và chấp nhận một trong hai bố cục NPY:
+
+```text
+<dataset_dir>/train_states.npy, train_targets.npy, train_legal_masks.npy, ...
+<dataset_dir>/train/states.npy, train/targets.npy, train/legal_masks.npy, ...
+```
+
+Checkpoint baseline local là `checkpoints/stage4/best_lichess.pt` (epoch 4). Kết quả test đã ghi nhận: loss 2,3255; Top-1 32,53%; Top-5 67,00%. Đây là kết quả lịch sử, không thay thế các report Carlsen/Arena cũ. Agent luôn yêu cầu checkpoint tường minh:
+
+```powershell
+python main.py --agent supervised --checkpoint checkpoints/stage4/best_lichess.pt
+python -m arena.tournament --agents random supervised:checkpoints/stage4/best_lichess.pt --games 10
+```
 
 Quy ước `.pt`, metadata/config, dấu value, thứ tự Tùng bàn giao CNN/Value cho Thái và thiết kế nạp checkpoint vào factory được ghi tại [docs/HANDOFF.md](docs/HANDOFF.md). Bộ nạp checkpoint chỉ được tích hợp khi stage học máy có model thật; không công bố skeleton như bot đã huấn luyện.
 
