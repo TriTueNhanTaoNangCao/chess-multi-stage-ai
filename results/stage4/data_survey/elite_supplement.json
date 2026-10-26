@@ -1,0 +1,181 @@
+{
+  "source": {
+    "path": "C:\\Users\\ADMIN\\My_Project\\advance_AI\\chess-multi-stage-ai\\data\\survey\\lichess_elite\\lichess_elite_2023-02.pgn",
+    "bytes": 209881676,
+    "sha256": "809307b24f2082816821092c669be1882ba8c2016c9cc78790df4d8129581c74"
+  },
+  "full_file": {
+    "total_games": 267507,
+    "games_by_yyyy_mm": {
+      "2023-02": 267507
+    },
+    "date_missing": 0,
+    "date_invalid_or_partial": 0
+  },
+  "sample": {
+    "scope": "reservoir_sample",
+    "seed": 42,
+    "sample_size": 2000,
+    "ply_bins": {
+      "<10": 8,
+      "10-19": 8,
+      "20-39": 150,
+      ">=40": 1834
+    },
+    "five_shortest": [
+      {
+        "game_index": 64302,
+        "plies": 1,
+        "result": "1-0",
+        "headers": {
+          "Event": "Rated Blitz tournament cAORRRW3",
+          "Site": "lichess.org",
+          "Date": "2023.02.26",
+          "Round": "?",
+          "White": "NeverEnough",
+          "Black": "hectorluis2019",
+          "Result": "1-0",
+          "ECO": "A40",
+          "WhiteElo": "2818",
+          "BlackElo": "2360",
+          "PlyCount": "1",
+          "EventDate": "2023.??.??",
+          "EventType": "blitz"
+        }
+      },
+      {
+        "game_index": 16859,
+        "plies": 2,
+        "result": "0-1",
+        "headers": {
+          "Event": "Rated Blitz game",
+          "Site": "lichess.org",
+          "Date": "2023.02.07",
+          "Round": "?",
+          "White": "OkanOzsakallioglu",
+          "Black": "efe_mert_108",
+          "Result": "0-1",
+          "ECO": "B00",
+          "WhiteElo": "2530",
+          "BlackElo": "2343",
+          "PlyCount": "2",
+          "EventDate": "2023.??.??",
+          "EventType": "blitz"
+        }
+      },
+      {
+        "game_index": 145694,
+        "plies": 4,
+        "result": "0-1",
+        "headers": {
+          "Event": "Rated Blitz game",
+          "Site": "lichess.org",
+          "Date": "2023.02.11",
+          "Round": "?",
+          "White": "redtom",
+          "Black": "GLeruste",
+          "Result": "0-1",
+          "ECO": "A00",
+          "WhiteElo": "2531",
+          "BlackElo": "2530",
+          "PlyCount": "4",
+          "EventDate": "2023.??.??",
+          "EventType": "blitz"
+        }
+      },
+      {
+        "game_index": 201761,
+        "plies": 4,
+        "result": "1/2-1/2",
+        "headers": {
+          "Event": "Rated Blitz game",
+          "Site": "lichess.org",
+          "Date": "2023.02.19",
+          "Round": "?",
+          "White": "IlyaPautov",
+          "Black": "Lopuh99",
+          "Result": "1/2-1/2",
+          "ECO": "A13",
+          "WhiteElo": "2576",
+          "BlackElo": "2625",
+          "PlyCount": "4",
+          "EventDate": "2023.??.??",
+          "EventType": "blitz"
+        }
+      },
+      {
+        "game_index": 253781,
+        "plies": 6,
+        "result": "1/2-1/2",
+        "headers": {
+          "Event": "Rated Blitz game",
+          "Site": "lichess.org",
+          "Date": "2023.02.26",
+          "Round": "?",
+          "White": "BADAWAY",
+          "Black": "blueberry_pancakes",
+          "Result": "1/2-1/2",
+          "ECO": "E10",
+          "WhiteElo": "2731",
+          "BlackElo": "2611",
+          "PlyCount": "6",
+          "EventDate": "2023.??.??",
+          "EventType": "blitz"
+        }
+      }
+    ]
+  },
+  "machine_memory_at_run": {
+    "total_physical_bytes": 16961822720,
+    "available_physical_bytes": 3632021504
+  },
+  "dataset_build_memory_estimate": {
+    "build_dataset_reference": "training/dataset.py:318-344",
+    "behavior": "ChessSample objects remain grouped by split; np.stack copies state and legal_mask into final dense arrays, while np.array creates the remaining dense arrays.",
+    "final_dense_bytes_per_sample": 8525,
+    "final_components_bytes_per_sample": {
+      "states_float32_8x8x14": 3584,
+      "targets_int32": 4,
+      "legal_masks_bool_4672": 4672,
+      "game_ids_unicode_U64": 256,
+      "ply_indices_int32": 4,
+      "outcomes_float32": 4,
+      "outcome_known_bool": 1
+    },
+    "retained_source_state_and_mask_bytes_per_sample": 8256,
+    "estimates": {
+      "100000": {
+        "final_dense_arrays_bytes": 852500000,
+        "final_dense_arrays_gib": 0.7939524948596954,
+        "retained_per_sample_state_and_mask_bytes": 825600000,
+        "retained_per_sample_state_and_mask_gib": 0.7688999176025391,
+        "peak_lower_bound_bytes": 1678100000,
+        "peak_lower_bound_gib": 1.5628524124622345
+      },
+      "500000": {
+        "final_dense_arrays_bytes": 4262500000,
+        "final_dense_arrays_gib": 3.969762474298477,
+        "retained_per_sample_state_and_mask_bytes": 4128000000,
+        "retained_per_sample_state_and_mask_gib": 3.8444995880126953,
+        "peak_lower_bound_bytes": 8390500000,
+        "peak_lower_bound_gib": 7.8142620623111725
+      },
+      "1000000": {
+        "final_dense_arrays_bytes": 8525000000,
+        "final_dense_arrays_gib": 7.939524948596954,
+        "retained_per_sample_state_and_mask_bytes": 8256000000,
+        "retained_per_sample_state_and_mask_gib": 7.688999176025391,
+        "peak_lower_bound_bytes": 16781000000,
+        "peak_lower_bound_gib": 15.628524124622345
+      }
+    },
+    "unmeasured_overhead": [
+      "ChessSample and Python scalar/string objects",
+      "NumPy array object headers and allocator fragmentation",
+      "temporary Python reference lists passed to np.stack/np.array",
+      "possible astype and np.stack temporaries",
+      "np.savez_compressed buffers"
+    ]
+  },
+  "no_tensor_dataset_or_training": true
+}

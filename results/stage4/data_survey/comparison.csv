@@ -1,0 +1,3 @@
+dataset,total_games,unique_players,white_elo_missing,white_elo_min,white_elo_median,white_elo_max,black_elo_missing,black_elo_min,black_elo_median,black_elo_max,time_control_missing,time_control_ununderstood,strict_metadata_candidate,sample_size,sample_parse_error_games,sample_invalid_root_games,sample_illegal_move_games,sample_ply_min,sample_ply_median,sample_ply_p90,sample_ply_max,sample_duplicate_games
+lichess_elite_2023-02,267507,17547,0,2300,2538.0,3154,0,2300,2539.0,3175,267507,0,0,2000,0,0,0,1,79.0,134.0,438,0
+carlsen,7818,1338,21,1911,2781.0,2882,34,1650,2777.0,2882,7818,0,0,2000,0,0,0,2,86.0,135.0,348,0
