@@ -4,3 +4,7 @@ __pycache__/
 .venv/
 checkpoints/*.pt
 checkpoints/*.pth
+/data/
+/checkpoints/**/*.pt
+/checkpoints/**/*.pth
+/audit-results.xml
