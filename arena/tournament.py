@@ -9,7 +9,7 @@ from pathlib import Path
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agents import AGENT_REGISTRY, build_agent
+from agents import AGENT_REGISTRY, DEFAULT_TOURNAMENT_AGENTS, build_agent
 from agents.stage2_tree_search import MinimaxAgent
 from arena.evaluator import play_game
 
@@ -23,7 +23,7 @@ def update_elo(rating_a, rating_b, score_a, k=32):
     return rating_a + delta, rating_b - delta
 
 def build_default_tournament(depth=2, seed=42):
-    return [build_agent(key, depth, seed+i) for i, key in enumerate(AGENT_REGISTRY)]
+    return [build_agent(key, depth, seed+i) for i, key in enumerate(DEFAULT_TOURNAMENT_AGENTS)]
 
 def run_tournament(agents, *, games=2, max_plies=300, output_dir="results", k=32, metadata=None):
     if len(agents) < 2 or games < 2 or games % 2 or max_plies < 1 or k <= 0:
@@ -77,26 +77,42 @@ def run_tournament(agents, *, games=2, max_plies=300, output_dir="results", k=32
     return payload
 
 def build_cli_agents(specs, depth, seed):
-    """KEY or KEY:DEPTH; explicit depth only applies to search agents."""
+    """KEY or KEY:DEPTH or KEY:CHECKPOINT; explicit depth only applies to search agents."""
     agents = []
     config = []
     if depth < 1:
         raise ValueError("--depth must be >=1")
     for i, spec in enumerate(specs):
-        parts = spec.split(":")
-        key = parts[0]
-        if key not in AGENT_REGISTRY or len(parts) > 2:
+        if ":" in spec:
+            key, arg = spec.split(":", 1)
+        else:
+            key, arg = spec, None
+
+        if key not in AGENT_REGISTRY:
             raise ValueError(f"Unknown agent specification: {spec}")
+
+        if key == "supervised":
+            if not arg:
+                raise ValueError(
+                    "Supervised agent requires checkpoint path "
+                    f"(e.g. supervised:checkpoints/stage4/best_lichess.pt): {spec}"
+                )
+            agent = build_agent(key, checkpoint=arg, seed=seed+i)
+            agents.append(agent)
+            config.append({"key": key, "name": agent.name, "checkpoint": arg, "seed": seed+i})
+            continue
+
         local_depth = depth
-        if len(parts) == 2:
+        if arg is not None:
             if not issubclass(AGENT_REGISTRY[key], MinimaxAgent):
                 raise ValueError(f"{key} does not use search depth")
             try:
-                local_depth = int(parts[1])
+                local_depth = int(arg)
             except ValueError:
                 raise ValueError(f"Depth must be a positive integer: {spec}") from None
             if local_depth < 1:
                 raise ValueError(f"Depth must be >=1: {spec}")
+
         agent = build_agent(key, local_depth, seed+i)
         agents.append(agent)
         config.append({"key": key, "name": agent.name,
@@ -111,8 +127,9 @@ def main(argv=None):
     parser.add_argument("--depth", type=int, default=2)
     parser.add_argument("--max-plies", type=int, default=300)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--agents", nargs="+", default=list(AGENT_REGISTRY),
-                        metavar="KEY[:DEPTH]", help="Example: alphabeta:2 alphabeta:4")
+    parser.add_argument("--agents", nargs="+", default=DEFAULT_TOURNAMENT_AGENTS,
+                        metavar="KEY[:SPEC]",
+                        help="Example: random supervised:checkpoints/stage4/best_lichess.pt")
     parser.add_argument("--output-dir", default="results")
     args = parser.parse_args(argv)
     try:
