@@ -262,4 +262,3 @@ def scripted_indices(moves):
         target.append(ChessEncoder.encode_move(move, board.turn))
         board.push(move)
     return white, black
-
