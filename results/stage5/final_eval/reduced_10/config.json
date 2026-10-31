@@ -1,0 +1,61 @@
+{
+  "claim_draw": true,
+  "colors_per_opening": 2,
+  "config_sha256": "6eb4bec3269a7886229999a8dab5ea0248dac28b8f99a281453be6df9ea453cb",
+  "elo_not_computed": true,
+  "games_per_matchup": 20,
+  "max_plies_after_opening": 300,
+  "opening_limit": 10,
+  "opening_selection": "first_n_in_saved_order; not selected by result",
+  "opening_source": {
+    "count": 50,
+    "file_sha256": "4a54b5f7aee985fd33e0d46f15c803554029d8fd7d42e63f6e969fdad36bf1eb",
+    "ordered_openings_sha256": "f0516621ba70a7f278de1c791e12a6a4c7e2a2c5ad85293333ea87371bc4c850",
+    "path": "results/stage5/batch_comparison/comparison.json",
+    "plies_per_opening": 8
+  },
+  "opponent_strength_unchanged": true,
+  "opponents": {
+    "alphabeta_d3_q6": {
+      "depth": 3,
+      "q_depth": 6,
+      "type": "AlphaBetaAgent",
+      "use_quiescence": true
+    },
+    "mcts_s200_r30": {
+      "c": 1.414,
+      "max_rollout_depth": 30,
+      "simulations": 200,
+      "type": "PureMCTSAgent"
+    },
+    "random": {
+      "type": "RandomAgent"
+    },
+    "think3": {
+      "lookahead": "one_ply",
+      "type": "Think3Agent"
+    }
+  },
+  "paired_games_are_not_claimed_independent": true,
+  "parent_800_config_sha256": "6931779f918dd74bbfaefb1f4254d9be878de69720965952d3d1c0ec841cc594",
+  "parent_records_preserved": true,
+  "policies": {
+    "b16": {
+      "path": "checkpoints/stage5/batch_comparison/b16/best.pt",
+      "sha256": "1b3480e25cbf4b55cafeae85f0915a409993b7b2d08b068e35bb9cd056b244e0"
+    },
+    "paper": {
+      "path": "checkpoints/stage5/paper_frozen_2073/last.pt",
+      "sha256": "4d70697035064bfc4be2e505959bb070d4a3afd0c697390b78908605016e1832"
+    }
+  },
+  "policy_device": "cpu",
+  "policy_move_selection": "legal_masked_argmax",
+  "purpose": "stage5_final_reduced_fixed_opening_validation",
+  "records_outside_target_retained_as_supplemental": true,
+  "reduction_reason": "reduced evaluation budget because of wall-clock cost",
+  "schema_version": 1,
+  "seed_formula": "207400000 + opponent_index*1000 + one_based_opening_index*2 + color_index; color_index=0 policy_white, 1 policy_black; policy name intentionally excluded",
+  "selected_openings_sha256": "dd20ae6e858eef1c803e60e4499eee94a81028bed556edd64b7c1fee313e478c",
+  "total_games": 160
+}
