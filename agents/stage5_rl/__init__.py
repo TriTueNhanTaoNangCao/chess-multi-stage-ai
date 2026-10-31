@@ -1,1 +1,5 @@
-"""Thái: REINFORCE policy + baseline/value. Pending implementation."""
+"""Stage 5 REINFORCE Policy Agent."""
+
+from .rl_agent import RLPolicyAgent
+
+__all__ = ["RLPolicyAgent"]

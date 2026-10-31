@@ -2,7 +2,7 @@
 import argparse
 import sys
 import chess
-from agents import AGENT_REGISTRY, build_agent, HumanAgent
+from agents import AGENT_REGISTRY, CHECKPOINT_REQUIRED_AGENTS, build_agent, HumanAgent
 from games.chess.board import ChessBoard
 
 
@@ -64,15 +64,15 @@ def main(argv=None):
     parser.add_argument(
         "--checkpoint",
         default=None,
-        help=("Path to model checkpoint (required for supervised agent; "
+        help=("Path to model checkpoint (required for supervised/rl_policy; "
               "Stage 4 baseline: checkpoints/stage4/best_lichess.pt)"),
     )
     parser.add_argument("--ascii", action="store_true", help="ASCII pieces for terminals without chess glyphs")
     args = parser.parse_args(argv)
     if args.depth < 1:
         parser.error("--depth must be >=1")
-    if args.agent == "supervised" and not args.checkpoint:
-        parser.error("--checkpoint is required when using supervised agent")
+    if args.agent in CHECKPOINT_REQUIRED_AGENTS and not args.checkpoint:
+        parser.error(f"--checkpoint is required when using {args.agent} agent")
     try:
         initial_board = ChessBoard(args.fen)
     except ValueError as exc:

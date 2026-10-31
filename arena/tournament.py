@@ -9,7 +9,12 @@ from pathlib import Path
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agents import AGENT_REGISTRY, DEFAULT_TOURNAMENT_AGENTS, build_agent
+from agents import (
+    AGENT_REGISTRY,
+    CHECKPOINT_REQUIRED_AGENTS,
+    DEFAULT_TOURNAMENT_AGENTS,
+    build_agent,
+)
 from agents.stage2_tree_search import MinimaxAgent
 from arena.evaluator import play_game
 
@@ -91,11 +96,11 @@ def build_cli_agents(specs, depth, seed):
         if key not in AGENT_REGISTRY:
             raise ValueError(f"Unknown agent specification: {spec}")
 
-        if key == "supervised":
+        if key in CHECKPOINT_REQUIRED_AGENTS:
             if not arg:
                 raise ValueError(
-                    "Supervised agent requires checkpoint path "
-                    f"(e.g. supervised:checkpoints/stage4/best_lichess.pt): {spec}"
+                    f"{key} agent requires checkpoint path "
+                    f"(e.g. {key}:checkpoints/stage5/last.pt): {spec}"
                 )
             agent = build_agent(key, checkpoint=arg, seed=seed+i)
             agents.append(agent)
@@ -129,7 +134,8 @@ def main(argv=None):
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--agents", nargs="+", default=DEFAULT_TOURNAMENT_AGENTS,
                         metavar="KEY[:SPEC]",
-                        help="Example: random supervised:checkpoints/stage4/best_lichess.pt")
+                        help=("Example: random supervised:checkpoints/stage4/best_lichess.pt "
+                              "rl_policy:checkpoints/stage5/last.pt"))
     parser.add_argument("--output-dir", default="results")
     args = parser.parse_args(argv)
     try:

@@ -6,6 +6,7 @@ from .stage1_heuristics import Think1Agent, Think2Agent, Think3Agent
 from .stage2_tree_search import MinimaxAgent, AlphaBetaAgent
 from .stage3_mcts_pure import PureMCTSAgent, MCTSNode
 from .stage4_supervised.supervised_agent import SupervisedAgent
+from .stage5_rl.rl_agent import RLPolicyAgent
 
 # Agents that can be instantiated with default (depth, seed) without external checkpoints
 CLASSIC_AGENTS = [
@@ -19,7 +20,7 @@ CLASSIC_AGENTS = [
 ]
 
 DEFAULT_TOURNAMENT_AGENTS = list(CLASSIC_AGENTS)
-CHECKPOINT_REQUIRED_AGENTS = {"supervised"}
+CHECKPOINT_REQUIRED_AGENTS = {"supervised", "rl_policy"}
 
 AGENT_REGISTRY = {
     "random": RandomAgent,
@@ -30,6 +31,7 @@ AGENT_REGISTRY = {
     "alphabeta": AlphaBetaAgent,
     "mcts_pure": PureMCTSAgent,
     "supervised": SupervisedAgent,
+    "rl_policy": RLPolicyAgent,
 }
 
 
@@ -37,9 +39,11 @@ def build_agent(key, depth=None, seed=None, *, checkpoint=None, device="cpu"):
     if key not in AGENT_REGISTRY:
         raise KeyError(f"Unknown agent key: {key}. Available: {list(AGENT_REGISTRY.keys())}")
     cls = AGENT_REGISTRY[key]
-    if key == "supervised" or issubclass(cls, SupervisedAgent):
+    if key in CHECKPOINT_REQUIRED_AGENTS:
         if not checkpoint:
-            raise ValueError("Supervised agent requires a valid checkpoint path (use --checkpoint).")
+            raise ValueError(
+                f"{key} agent requires a valid checkpoint path (use --checkpoint)."
+            )
         return cls(checkpoint=checkpoint, device=device, seed=seed)
     if issubclass(cls, MinimaxAgent):
         return cls(**({"depth": depth} if depth is not None else {}))
@@ -54,6 +58,6 @@ def build_agent(key, depth=None, seed=None, *, checkpoint=None, device="cpu"):
 __all__ = [
     "BaseAgent", "HumanAgent", "RandomAgent", "Think1Agent", "Think2Agent",
     "Think3Agent", "MinimaxAgent", "AlphaBetaAgent", "PureMCTSAgent", "MCTSNode",
-    "SupervisedAgent", "AGENT_REGISTRY", "build_agent",
+    "SupervisedAgent", "RLPolicyAgent", "AGENT_REGISTRY", "build_agent",
     "CLASSIC_AGENTS", "DEFAULT_TOURNAMENT_AGENTS", "CHECKPOINT_REQUIRED_AGENTS",
 ]
