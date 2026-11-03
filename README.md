@@ -13,7 +13,7 @@ Kiến trúc kế thừa cách tổ chức của `connect4-multi-stage-ai`, chuy
 | **Thắng** | **Core Base**: kiến trúc, board, encoder<br>**GUI & CLI**: Pygame Dashboard, Terminal<br>**Arena**: 1v1, round-robin, Elo<br>**Stage 1**: Think1, Think2, Think3<br>**Stage 2**: Minimax, Alpha-Beta, Quiescence<br>Kiểm thử, tài liệu tích hợp | `games/`<br>`arena/`<br>`agents/stage1_heuristics/`<br>`agents/stage2_tree_search/`<br>`tests/`, `main.py` | ✅ **Đã triển khai; 61 test đạt** |
 | **Thi** | **Stage 3**: Pure MCTS — UCB1, Expansion, Rollout, Backprop | `agents/stage3_mcts_pure/` | ⏳ Cần làm tiếp theo |
 | **Thái** | **Stage 4**: SL CNN từ PGN / expert data<br>**Stage 5**: REINFORCE & Value Net | `agents/stage4_supervised/`<br>`agents/stage5_rl/`<br>`training/` | ✅ Stage 4 baseline Lichess<br>⏳ Stage 5 |
-| **Tùng** | **Stage 6**: AlphaGo MCTS — prior + value<br>**Stage 7**: AlphaZero — Dual-Head ResNet, PUCT, self-play | `agents/stage6_alphago/`<br>`agents/stage7_alphazero/`<br>`models/` | ⏳ Chờ Stage 4, 5 |
+| **Tùng** | **Stage 6**: AlphaGo MCTS — prior + value<br>**Stage 7**: AlphaZero — Dual-Head ResNet, PUCT, self-play | `agents/stage6_alphago/`<br>`agents/stage7_alphazero/`<br>`models/` | ✅ Stage 6 hoàn thành; 24 test đạt<br>⏳ Stage 7 |
 
 **Nghiệm thu phần Thắng:** 61 kiểm thử tự động qua cả unittest và pytest; GUI được render và kiểm tra bằng SDL headless; giải vòng tròn thực tế 30 ván, không có nước phạm luật hoặc lỗi bot. Xem [biên bản QA](docs/QA.md) và [hợp đồng bàn giao Stage 3–7](docs/HANDOFF.md). Các test đạt không bảo đảm không còn lỗi ở mọi thế cờ.
 
@@ -28,7 +28,7 @@ Kiến trúc kế thừa cách tổ chức của `connect4-multi-stage-ai`, chuy
 | 3 | Pure MCTS với UCB1 và rollout | Board → move theo visits | Skeleton |
 | 4 | CNN học giám sát | Tensor → policy logits, legal mask | Skeleton |
 | 5 | REINFORCE và value baseline | Self-play → policy/value | Skeleton |
-| 6 | AlphaGo-style MCTS | Policy prior + value/rollout → move | Skeleton |
+| 6 | AlphaGo-style MCTS | Policy prior + value/rollout → move | Hoàn thành |
 | 7 | AlphaZero-style self-play, PUCT, dual-head ResNet | State → policy/value → search | Skeleton |
 
 Lộ trình này là mô hình học thuật thu nhỏ, không phải tái lập đầy đủ hệ thống DeepMind. Minimax/Alpha-Beta là baseline cờ vua cổ điển; không phải thuật toán tìm kiếm của AlphaZero.
