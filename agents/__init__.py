@@ -7,6 +7,7 @@ from .stage2_tree_search import MinimaxAgent, AlphaBetaAgent
 from .stage3_mcts_pure import PureMCTSAgent, MCTSNode
 from .stage4_supervised.supervised_agent import SupervisedAgent
 from .stage5_rl.rl_agent import RLPolicyAgent
+from .stage6_alphago import AlphaGoAgent, AlphaGoNode, AlphaGoMCTS
 
 # Agents that can be instantiated with default (depth, seed) without external checkpoints
 CLASSIC_AGENTS = [
@@ -17,6 +18,7 @@ CLASSIC_AGENTS = [
     "minimax",
     "alphabeta",
     "mcts_pure",
+    "alphago",
 ]
 
 DEFAULT_TOURNAMENT_AGENTS = list(CLASSIC_AGENTS)
@@ -32,6 +34,7 @@ AGENT_REGISTRY = {
     "mcts_pure": PureMCTSAgent,
     "supervised": SupervisedAgent,
     "rl_policy": RLPolicyAgent,
+    "alphago": AlphaGoAgent,
 }
 
 
@@ -52,12 +55,24 @@ def build_agent(key, depth=None, seed=None, *, checkpoint=None, device="cpu"):
         if seed is not None:
             kwargs["seed"] = seed
         return cls(**kwargs)
+    if issubclass(cls, AlphaGoAgent):
+        kwargs = {}
+        if seed is not None:
+            kwargs["seed"] = seed
+        if checkpoint is not None:
+            kwargs["checkpoint"] = checkpoint
+        if device is not None:
+            kwargs["device"] = device
+        if depth is not None:
+            kwargs["simulations"] = max(10, depth * 15)
+        return cls(**kwargs)
     return cls(seed=seed)
 
 
 __all__ = [
     "BaseAgent", "HumanAgent", "RandomAgent", "Think1Agent", "Think2Agent",
     "Think3Agent", "MinimaxAgent", "AlphaBetaAgent", "PureMCTSAgent", "MCTSNode",
-    "SupervisedAgent", "RLPolicyAgent", "AGENT_REGISTRY", "build_agent",
-    "CLASSIC_AGENTS", "DEFAULT_TOURNAMENT_AGENTS", "CHECKPOINT_REQUIRED_AGENTS",
+    "SupervisedAgent", "RLPolicyAgent", "AlphaGoAgent", "AlphaGoNode", "AlphaGoMCTS",
+    "AGENT_REGISTRY", "build_agent", "CLASSIC_AGENTS", "DEFAULT_TOURNAMENT_AGENTS",
+    "CHECKPOINT_REQUIRED_AGENTS",
 ]
