@@ -96,7 +96,7 @@ def build_cli_agents(specs, depth, seed):
         if key not in AGENT_REGISTRY:
             raise ValueError(f"Unknown agent specification: {spec}")
 
-        if key in CHECKPOINT_REQUIRED_AGENTS:
+        if key in CHECKPOINT_REQUIRED_AGENTS or (key in ("alphazero", "alphago") and arg is not None and not arg.isdigit()):
             if not arg:
                 raise ValueError(
                     f"{key} agent requires checkpoint path "
