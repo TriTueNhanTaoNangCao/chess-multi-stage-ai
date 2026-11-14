@@ -64,6 +64,11 @@ class AlphaZeroMCTS:
         self.rng = random.Random(seed)
         self.np_rng = np.random.default_rng(seed)
 
+    def reset(self) -> None:
+        """Reset search engine state and RNG seeds."""
+        self.rng = random.Random(self.seed)
+        self.np_rng = np.random.default_rng(self.seed)
+
     def _predict(self, board: ChessBoard) -> Tuple[Dict[chess.Move, float], float]:
         """
         Evaluate board state using DualHeadResNet or custom predict_fn.
