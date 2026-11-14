@@ -68,6 +68,9 @@ def main(argv=None):
               "Stage 4 baseline: checkpoints/stage4/best_lichess.pt)"),
     )
     parser.add_argument("--ascii", action="store_true", help="ASCII pieces for terminals without chess glyphs")
+    parser.add_argument("--watch", action="store_true", help="Watch bot vs bot in Pygame GUI without human player")
+    parser.add_argument("--opponent", choices=AGENT_REGISTRY, default="random", help="Opponent bot in watch mode (default: random)")
+    parser.add_argument("--delay", type=float, default=0.4, help="Delay between bot moves in seconds (default: 0.4)")
     args = parser.parse_args(argv)
     if args.depth < 1:
         parser.error("--depth must be >=1")
@@ -80,7 +83,26 @@ def main(argv=None):
     if args.cli:
         return run_cli(args)
     from games.chess.gui import ChessGUI
-    ChessGUI(args.agent, args.depth, args.side == "white", args.seed, initial_board).run()
+    if args.watch:
+        ChessGUI(
+            agent_key=args.agent,
+            depth=args.depth,
+            human_color=None,
+            seed=args.seed,
+            board=initial_board,
+            black_agent_key=args.opponent,
+            move_delay=args.delay,
+            checkpoint=args.checkpoint,
+        ).run()
+        return 0
+    ChessGUI(
+        agent_key=args.agent,
+        depth=args.depth,
+        human_color=args.side == "white",
+        seed=args.seed,
+        board=initial_board,
+        checkpoint=args.checkpoint,
+    ).run()
     return 0
 
 

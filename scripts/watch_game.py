@@ -134,11 +134,22 @@ def main():
     parser.add_argument("--depth", type=int, default=2, help="Search depth / simulation budget")
     parser.add_argument("--delay", type=float, default=0.3, help="Delay in seconds between moves")
     parser.add_argument("--max-plies", type=int, default=60, help="Maximum plies before adjudication")
+    parser.add_argument("--gui", action="store_true", help="Launch Pygame graphical window to watch bots")
     parser.add_argument("--learn", action="store_true", help="Run AlphaZero self-play and training step")
     args = parser.parse_args()
 
     if args.learn:
         play_and_learn_alphazero()
+    elif args.gui:
+        from games.chess.gui import ChessGUI
+        print(f"Launching Pygame GUI: {args.white} (White) vs {args.black} (Black)...")
+        ChessGUI(
+            agent_key=args.white,
+            depth=args.depth,
+            human_color=None,
+            black_agent_key=args.black,
+            move_delay=args.delay,
+        ).run()
     else:
         play_in_terminal(
             agent_white_key=args.white,
