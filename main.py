@@ -17,13 +17,43 @@ def needs_ascii(stream):
 def run_cli(args):
     from games.chess.renderer import ChessRenderer
     from colorama import just_fix_windows_console
-    from time import perf_counter
+    from time import perf_counter, sleep
     just_fix_windows_console()
     board = ChessBoard(args.fen)
+    ascii_only = args.ascii or needs_ascii(sys.stdout)
+    if args.watch:
+        white_bot = build_agent(args.agent, args.depth, args.seed, checkpoint=getattr(args, "checkpoint", None))
+        black_bot = build_agent(args.opponent, args.depth, args.seed + 1)
+        try:
+            while True:
+                print(ChessRenderer.render(board.board, flipped=False,
+                                           ascii_only=ascii_only, color=sys.stdout.isatty()))
+                if board.is_terminal():
+                    outcome = board.outcome()
+                    print(f"Result: {outcome.result()} ({outcome.termination.name})")
+                    return 0
+                current_bot = white_bot if board.turn == chess.WHITE else black_bot
+                turn_str = "Trắng" if board.turn == chess.WHITE else "Đen"
+                started = perf_counter()
+                try:
+                    move = current_bot.act(board.clone())
+                    if not board.is_legal(move):
+                        raise ValueError(f"Illegal action: {move!r}")
+                    san = board.san(move)
+                    board.step(move)
+                except Exception as exc:
+                    print(f"AI error ({current_bot.name}): {type(exc).__name__}: {exc}", file=sys.stderr)
+                    return 1
+                print(f"{turn_str} [{current_bot.name}]: {san} ({perf_counter()-started:.3f}s)")
+                if getattr(args, "delay", 0) > 0:
+                    sleep(args.delay)
+        except (EOFError, KeyboardInterrupt):
+            print("\nGoodbye.")
+            return 0
+
     bot = build_agent(args.agent, args.depth, args.seed, checkpoint=getattr(args, "checkpoint", None))
     human = HumanAgent()
     human_color = args.side == "white"
-    ascii_only = args.ascii or needs_ascii(sys.stdout)
     try:
         while True:
             print(ChessRenderer.render(board.board, flipped=not human_color,
@@ -68,6 +98,9 @@ def main(argv=None):
               "Stage 4 baseline: checkpoints/stage4/best_lichess.pt)"),
     )
     parser.add_argument("--ascii", action="store_true", help="ASCII pieces for terminals without chess glyphs")
+    parser.add_argument("--watch", action="store_true", help="Watch bot vs bot in Pygame GUI without human player")
+    parser.add_argument("--opponent", choices=AGENT_REGISTRY, default="random", help="Opponent bot in watch mode (default: random)")
+    parser.add_argument("--delay", type=float, default=0.4, help="Delay between bot moves in seconds (default: 0.4)")
     args = parser.parse_args(argv)
     if args.depth < 1:
         parser.error("--depth must be >=1")
@@ -80,7 +113,26 @@ def main(argv=None):
     if args.cli:
         return run_cli(args)
     from games.chess.gui import ChessGUI
-    ChessGUI(args.agent, args.depth, args.side == "white", args.seed, initial_board).run()
+    if args.watch:
+        ChessGUI(
+            agent_key=args.agent,
+            depth=args.depth,
+            human_color=None,
+            seed=args.seed,
+            board=initial_board,
+            black_agent_key=args.opponent,
+            move_delay=args.delay,
+            checkpoint=args.checkpoint,
+        ).run()
+        return 0
+    ChessGUI(
+        agent_key=args.agent,
+        depth=args.depth,
+        human_color=args.side == "white",
+        seed=args.seed,
+        board=initial_board,
+        checkpoint=args.checkpoint,
+    ).run()
     return 0
 
 

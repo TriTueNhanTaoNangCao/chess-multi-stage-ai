@@ -4,7 +4,7 @@ os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
 os.environ.setdefault("SDL_VIDEO_CENTERED", "1")
 import queue
 import threading
-from time import perf_counter
+from time import perf_counter, sleep
 import chess
 import pygame
 from agents import AGENT_REGISTRY, build_agent
@@ -20,9 +20,10 @@ LIGHT = "#e9edcc"
 DARK = "#779954"
 
 class ChessGUI:
-    def __init__(self, agent_key="alphabeta", depth=3, human_color=chess.WHITE, seed=42, board=None):
+    def __init__(self, agent_key="alphabeta", depth=3, human_color=chess.WHITE, seed=42, board=None, black_agent_key=None, move_delay=0.4, checkpoint=None):
         pygame.init()
-        pygame.display.set_caption("Chess Multi-Stage AI")
+        title = f"Chess Multi-Stage AI - [Watch: {agent_key} vs {black_agent_key or 'random'}]" if human_color is None else "Chess Multi-Stage AI"
+        pygame.display.set_caption(title)
         desktop = pygame.display.get_desktop_sizes()[0]
         self.window = pygame.display.set_mode(self.fit_window_size(desktop), pygame.RESIZABLE)
         # Draw at a stable logical resolution; scale the entire dashboard and
@@ -35,8 +36,18 @@ class ChessGUI:
         self.board_rect = pygame.Rect(180, 190, 640, 640)
         self.square_size = 80
         self.agent_key, self.depth, self.seed = agent_key, depth, seed
-        self.agent = build_agent(agent_key, depth, seed)
         self.human_color = human_color
+        self.black_agent_key = black_agent_key or "random"
+        self.move_delay = move_delay
+        self.checkpoint = checkpoint
+        if self.human_color is None:
+            self.white_agent = build_agent(agent_key, depth, seed, checkpoint=checkpoint)
+            self.black_agent = build_agent(self.black_agent_key, depth, seed + 1)
+            self.agent = self.white_agent
+        else:
+            self.agent = build_agent(agent_key, depth, seed, checkpoint=checkpoint)
+            self.white_agent = self.agent if human_color == chess.BLACK else None
+            self.black_agent = self.agent if human_color == chess.WHITE else None
         self.board = board.clone() if board is not None else ChessBoard()
         self.selected = None
         self.promotion_moves = []
@@ -108,7 +119,12 @@ class ChessGUI:
         self.invalidate()
         self.board.reset()
         # A fresh instance prevents overlapping state with a stale worker.
-        self.agent = build_agent(self.agent_key, self.depth, self.seed)
+        if self.human_color is None:
+            self.white_agent = build_agent(self.agent_key, self.depth, self.seed, checkpoint=self.checkpoint)
+            self.black_agent = build_agent(self.black_agent_key, self.depth, self.seed + 1)
+            self.agent = self.white_agent
+        else:
+            self.agent = build_agent(self.agent_key, self.depth, self.seed, checkpoint=self.checkpoint)
 
     def undo(self):
         self.invalidate()
@@ -116,7 +132,7 @@ class ChessGUI:
             self.board.pop()
             if self.board.turn != self.human_color and self.board.board.move_stack:
                 self.board.pop()
-        self.agent = build_agent(self.agent_key, self.depth, self.seed)
+        self.agent = build_agent(self.agent_key, self.depth, self.seed, checkpoint=self.checkpoint)
 
     def switch_bot(self):
         keys = list(AGENT_REGISTRY)
@@ -158,11 +174,20 @@ class ChessGUI:
         self.selected = square if piece and piece.color == self.human_color else None
 
     def start_worker(self):
-        if self.working or self.error or self.board.is_terminal() or self.board.turn == self.human_color:
+        if self.working or self.error or self.board.is_terminal():
+            return
+        if self.human_color is not None and self.board.turn == self.human_color:
             return
         self.working = True
-        generation, snapshot, agent = self.generation, self.board.clone(), self.agent
+        if self.human_color is None:
+            agent = self.white_agent if self.board.turn == chess.WHITE else self.black_agent
+        else:
+            agent = self.agent
+        generation, snapshot = self.generation, self.board.clone()
+        delay = getattr(self, "move_delay", 0.4)
         def work():
+            if delay > 0:
+                sleep(delay)
             started = perf_counter()
             try:
                 move, error = agent.act(snapshot), ""
@@ -197,21 +222,37 @@ class ChessGUI:
         if outcome:
             if outcome.winner is None:
                 return "Hòa cờ!"
+            if self.human_color is None:
+                winner_name = self.white_agent.name if outcome.winner == chess.WHITE else self.black_agent.name
+                return f"Chiếu Hết! {winner_name} Thắng!"
             return "Chiếu Hết! Bạn Thắng!" if outcome.winner == self.human_color else "Chiếu Hết! Bạn Thua!"
         if self.board.is_check():
+            if self.human_color is None:
+                bot_turn = self.white_agent.name if self.board.turn == chess.WHITE else self.black_agent.name
+                return f"Chiếu Vua! — Lượt {bot_turn}"
             return "Chiếu Vua! — Đến lượt bạn" if self.board.turn == self.human_color else "Chiếu Vua! — AI đang nghĩ"
+        if self.human_color is None:
+            bot_turn = self.white_agent.name if self.board.turn == chess.WHITE else self.black_agent.name
+            return f"Quan sát Bot: Lượt {bot_turn}..."
         return "Đến Lượt Bạn!" if self.board.turn == self.human_color else "AI Đang Suy Nghĩ..."
 
     def render(self):
         self.screen.fill(BG)
         self.text("CHESS / MULTI-STAGE AI", 16, ACCENT, (24, 13))
-        self.text("CLASSICAL ENGINE  /  STAGE 01–02", 14, MUTED, (694, 15))
+        header_tag = "BOT VS BOT ARENA" if self.human_color is None else "CLASSICAL ENGINE / STAGES"
+        self.text(header_tag, 14, MUTED, (694, 15))
         fen = self.board.fen()
         if fen != self._eval_fen:
             self._eval_fen = fen
             self._eval = evaluate_board(self.board.board, claim_draw=self.board.claim_draw)
-        turn = ("Bạn" if self.board.turn == self.human_color else "AI") + (" (Trắng)" if self.board.turn else " (Đen)")
-        cards = [("AI MODEL", self.agent.name), ("LƯỢT ĐI", turn),
+        if self.human_color is None:
+            current_bot = self.white_agent.name if self.board.turn == chess.WHITE else self.black_agent.name
+            turn = f"{current_bot} (" + ("Trắng)" if self.board.turn else "Đen)")
+            model_card = f"{self.white_agent.name[:6]} v {self.black_agent.name[:6]}"
+        else:
+            turn = ("Bạn" if self.board.turn == self.human_color else "AI") + (" (Trắng)" if self.board.turn else " (Đen)")
+            model_card = self.agent.name
+        cards = [("AI MODEL", model_card), ("LƯỢT ĐI", turn),
                  ("NƯỚC ĐI", str(len(self.board.board.move_stack)) + " ply"),
                  ("T.GIAN AI", f"{self.last_seconds:.3f}s"), ("EVAL SCORE", f"{self._eval/100:+.2f}")]
         for i, (label, value) in enumerate(cards):
@@ -220,7 +261,8 @@ class ChessGUI:
             self.text(label, 14, MUTED, (rect.x+12, rect.y+9))
             self.text(value, 16 if i == 0 else 22, TEXT, (rect.x+12, rect.y+31))
         self.text(self.status(), 30, "#ff648e" if self.board.is_check() else ACCENT, (500, 143), True)
-        self.text("Chọn quân • Chọn ô đến", 14, MUTED, (500, 171), True)
+        sub_text = "Chọn quân • Chọn ô đến" if self.human_color is not None else "Chế độ quan sát tự động (Bot vs Bot)"
+        self.text(sub_text, 14, MUTED, (500, 171), True)
         pygame.draw.rect(self.screen, CARD, self.board_rect.inflate(18,18), border_radius=8)
         position = self.board.board
         last = position.peek() if position.move_stack else None
@@ -248,13 +290,19 @@ class ChessGUI:
             if square in hints:
                 pygame.draw.circle(self.screen, "#425344", rect.center, 33 if piece else 9, 4 if piece else 0)
         for i in range(8):
-            self.text(chess.FILE_NAMES[i if self.human_color else 7-i], 14, MUTED, (220+i*80, 845), True)
-            self.text(str(8-i if self.human_color else i+1), 14, MUTED, (161,230+i*80), True)
-        self.text("TRẮNG" if self.human_color else "ĐEN", 14, MUTED, (65, 220), True)
-        self.text("BẠN", 18, ACCENT, (65, 246), True)
-        self.text("01 / 02", 18, ACCENT, (907, 220), True)
-        self.text("HEURISTIC", 14, MUTED, (907, 247), True)
-        self.text("& SEARCH", 14, MUTED, (907, 268), True)
+            self.text(chess.FILE_NAMES[i if (self.human_color or self.human_color is None) else 7-i], 14, MUTED, (220+i*80, 845), True)
+            self.text(str(8-i if (self.human_color or self.human_color is None) else i+1), 14, MUTED, (161,230+i*80), True)
+        if self.human_color is None:
+            self.text("TRẮNG", 14, MUTED, (65, 220), True)
+            self.text(self.white_agent.name[:10], 18, ACCENT, (65, 246), True)
+            self.text("ĐEN", 14, MUTED, (907, 220), True)
+            self.text(self.black_agent.name[:10], 18, ACCENT, (907, 247), True)
+        else:
+            self.text("TRẮNG" if self.human_color else "ĐEN", 14, MUTED, (65, 220), True)
+            self.text("BẠN", 18, ACCENT, (65, 246), True)
+            self.text("01 / 02", 18, ACCENT, (907, 220), True)
+            self.text("HEURISTIC", 14, MUTED, (907, 247), True)
+            self.text("& SEARCH", 14, MUTED, (907, 268), True)
         self.text("[R] Chơi lại    |    [U] Lùi nước    |    [M] Đổi đối thủ AI    |    [F] Đổi bên", 18, TEXT, (500, 881), True)
         if self.promotion_moves:
             shade = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
