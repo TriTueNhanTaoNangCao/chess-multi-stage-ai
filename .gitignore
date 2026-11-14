@@ -8,3 +8,8 @@ checkpoints/*.pth
 /checkpoints/**/*.pt
 /checkpoints/**/*.pth
 /audit-results.xml
+
+# Local report drafts and extraction
+docs/*.docx
+docs/extracted_report_text.txt
+
