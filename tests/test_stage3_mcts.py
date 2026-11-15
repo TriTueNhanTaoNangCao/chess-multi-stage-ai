@@ -456,6 +456,99 @@ class TestStage3MCTS(unittest.TestCase):
         # Bàn cờ gốc không bị biến đổi
         self.assertEqual(len(raw.move_stack), len(moves))
 
+    def test_constructor_simulations_validation(self):
+        """Xác minh kiểm tra kiểu và giá trị cho tham số simulations."""
+        # Hợp lệ: 1, 200
+        a1 = PureMCTSAgent(simulations=1)
+        self.assertEqual(a1.simulations, 1)
+        a200 = PureMCTSAgent(simulations=200)
+        self.assertEqual(a200.simulations, 200)
+
+        # Không hợp lệ về giá trị (ValueError): 0, -1
+        for val in [0, -1]:
+            with self.subTest(val=val):
+                with self.assertRaises(ValueError):
+                    PureMCTSAgent(simulations=val)
+
+        # Không hợp lệ về kiểu (TypeError): 1.5, True, False, "200", None, NaN, vô cực
+        for invalid_type in [1.5, True, False, "200", None, float("nan"), float("inf"), float("-inf")]:
+            with self.subTest(invalid_type=invalid_type):
+                with self.assertRaises(TypeError):
+                    PureMCTSAgent(simulations=invalid_type)
+
+    def test_constructor_max_rollout_depth_validation(self):
+        """Xác minh kiểm tra kiểu và giá trị cho tham số max_rollout_depth."""
+        # Hợp lệ: 0, 1, 30
+        for depth in [0, 1, 30]:
+            with self.subTest(depth=depth):
+                agent = PureMCTSAgent(max_rollout_depth=depth)
+                self.assertEqual(agent.max_rollout_depth, depth)
+
+        # Không hợp lệ về giá trị (ValueError): -1
+        for val in [-1]:
+            with self.subTest(val=val):
+                with self.assertRaises(ValueError):
+                    PureMCTSAgent(max_rollout_depth=val)
+
+        # Không hợp lệ về kiểu (TypeError): 1.5, True, False, "30", None, NaN, vô cực
+        for invalid_type in [1.5, True, False, "30", None, float("nan"), float("inf"), float("-inf")]:
+            with self.subTest(invalid_type=invalid_type):
+                with self.assertRaises(TypeError):
+                    PureMCTSAgent(max_rollout_depth=invalid_type)
+
+    def test_constructor_c_validation(self):
+        """Xác minh kiểm tra kiểu và giá trị cho tham số c (hệ số thăm dò UCB1)."""
+        # Hợp lệ: 0, 0.0, 1, 1.414
+        for valid_c in [0, 0.0, 1, 1.414]:
+            with self.subTest(valid_c=valid_c):
+                agent = PureMCTSAgent(c=valid_c)
+                self.assertEqual(agent.c, valid_c)
+
+        # Không hợp lệ về giá trị (ValueError): -1, NaN, +inf, -inf
+        for invalid_val in [-1, -0.5, float("nan"), float("inf"), float("-inf")]:
+            with self.subTest(invalid_val=invalid_val):
+                with self.assertRaises(ValueError):
+                    PureMCTSAgent(c=invalid_val)
+
+        # Không hợp lệ về kiểu (TypeError): True, False, "1.414", None
+        for invalid_type in [True, False, "1.414", None]:
+            with self.subTest(invalid_type=invalid_type):
+                with self.assertRaises(TypeError):
+                    PureMCTSAgent(c=invalid_type)
+
+    def test_valid_and_default_configs_act(self):
+        """
+        Xác nhận cấu hình mặc định và các cấu hình hợp lệ (c=0, c=0.0, c=1, max_rollout_depth=0)
+        vẫn thực thi act() bình thường, trả nước đi hợp lệ và không làm biến đổi bàn cờ đầu vào.
+        """
+        # Kiểm tra instance mặc định
+        default_agent = PureMCTSAgent()
+        self.assertEqual(default_agent.simulations, 200)
+        self.assertEqual(default_agent.c, 1.414)
+        self.assertEqual(default_agent.max_rollout_depth, 30)
+
+        test_configs = [
+            {"name": "low_sims_default_c_depth", "kwargs": {"simulations": 2, "seed": 42}},
+            {"name": "depth_0_material_only", "kwargs": {"simulations": 2, "max_rollout_depth": 0, "seed": 42}},
+            {"name": "c_0_int", "kwargs": {"simulations": 2, "c": 0, "seed": 42}},
+            {"name": "c_0_float", "kwargs": {"simulations": 2, "c": 0.0, "seed": 42}},
+            {"name": "c_1_int", "kwargs": {"simulations": 2, "c": 1, "seed": 42}},
+            {"name": "c_1_414_float", "kwargs": {"simulations": 2, "c": 1.414, "seed": 42}},
+        ]
+
+        for cfg in test_configs:
+            with self.subTest(config=cfg["name"]):
+                board = ChessBoard()
+                fen_before = board.fen()
+                stack_before = list(board.board.move_stack)
+
+                agent = PureMCTSAgent(**cfg["kwargs"])
+                move = agent.act(board)
+
+                self.assertIn(move, board.legal_moves)
+                self.assertEqual(board.fen(), fen_before)
+                self.assertEqual(list(board.board.move_stack), stack_before)
+
 
 if __name__ == "__main__":
     unittest.main()

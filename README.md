@@ -11,7 +11,7 @@ Kiến trúc kế thừa cách tổ chức của `connect4-multi-stage-ai`, chuy
 | Thành viên | Vai trò & giai đoạn phụ trách | Thư mục phụ trách | Trạng thái |
 | :--- | :--- | :--- | :---: |
 | **Thắng** | **Core Base**: kiến trúc, board, encoder<br>**GUI & CLI**: Pygame Dashboard, Terminal<br>**Arena**: 1v1, round-robin, Elo<br>**Stage 1**: Think1, Think2, Think3<br>**Stage 2**: Minimax, Alpha-Beta, Quiescence<br>Kiểm thử, tài liệu tích hợp | `games/`<br>`arena/`<br>`agents/stage1_heuristics/`<br>`agents/stage2_tree_search/`<br>`tests/`, `main.py` | ✅ **Đã triển khai; 61 test đạt** |
-| **Thi** | **Stage 3**: Pure MCTS — UCB1, Expansion, Rollout, Backprop | `agents/stage3_mcts_pure/` | ⏳ Cần làm tiếp theo |
+| **Thi** | **Stage 3**: Pure MCTS — UCB1, Expansion, Rollout, Backprop, Tree Reuse | `agents/stage3_mcts_pure/` | ✅ **Đã hoàn thành; 40 test đạt** |
 | **Thái** | **Stage 4**: SL CNN từ PGN / expert data<br>**Stage 5**: REINFORCE & Value Net | `agents/stage4_supervised/`<br>`agents/stage5_rl/`<br>`training/` | ✅ Stage 4 baseline Lichess<br>⏳ Stage 5 |
 | **Tùng** | **Stage 6**: AlphaGo MCTS — prior + value<br>**Stage 7**: AlphaZero — Dual-Head ResNet, PUCT, self-play | `agents/stage6_alphago/`<br>`agents/stage7_alphazero/`<br>`models/`<br>`training/` | ✅ **Hoàn thành 100% cả Stage 6 & 7; 57 test đạt** |
 
@@ -25,7 +25,7 @@ Kiến trúc kế thừa cách tổ chức của `connect4-multi-stage-ai`, chuy
 | :---: | :--- | :--- | :--- |
 | 1 | Think1: mate-in-one; Think2: tránh mate-in-one + MVV-LVA; Think3: material + PST + king safety | Board → legal move | Hoàn thành |
 | 2 | Minimax dạng Negamax; Alpha-Beta, move ordering, quiescence | Board → legal move | Hoàn thành |
-| 3 | Pure MCTS với UCB1 và rollout | Board → move theo visits | Skeleton |
+| 3 | Pure MCTS với UCB1, rollout và tái sử dụng cây (Tree Reuse) | Board → move theo visits | Hoàn thành |
 | 4 | CNN học giám sát | Tensor → policy logits, legal mask | Skeleton |
 | 5 | REINFORCE và value baseline | Self-play → policy/value | Skeleton |
 | 6 | AlphaGo-style MCTS | Policy prior + value/rollout → move | Hoàn thành ([Chi tiết](docs/STAGE6_REPORT.md)) |
@@ -43,6 +43,15 @@ Lộ trình này là mô hình học thuật thu nhỏ, không phải tái lập
 - **AlphaBeta** ưu tiên captures/promotions, cắt nhánh alpha-beta; ở lá tìm thêm captures/promotions và **mọi nước thoát chiếu**, kể cả nước không bắt quân.
 - Quiescence mặc định tối đa 6 ply mở rộng; ở giới hạn khi bị chiếu vẫn xét một nước thoát chiếu trước khi lượng giá. Đây là giới hạn tài nguyên, không bảo đảm giải quyết mọi chiến thuật.
 - Điểm mate là ±30000; tìm kiếm ưu tiên mate sớm và trì hoãn bị mate. `last_score` của search theo phía đang đi; điểm GUI theo **Trắng**, dương là lợi cho Trắng.
+
+### Chi tiết Stage 3 (Pure MCTS)
+
+- **Selection (UCB1):** Duyệt cây từ gốc xuống theo công thức UCB1: $-Q_{\text{child}} + c \sqrt{\frac{\ln N}{n}}$. Thành phần khai thác mang dấu âm do giá trị node được lưu theo góc nhìn của người tới lượt tại chính node con đó (đối thủ của node cha).
+- **Expansion:** Khi gặp node chưa mở rộng hết, rút một nước đi hợp lệ chưa thử và tạo node con mới gắn vào cây, bảo toàn trọn vẹn `move_stack` và chính sách hòa.
+- **Rollout (Mô phỏng ngẫu nhiên):** Đi ngẫu nhiên đến khi kết thúc ván hoặc chạm ngưỡng `max_rollout_depth=30`. Nếu chưa kết thúc, đánh giá chênh lệch vật chất $\text{delta} = \text{material\_white} - \text{material\_black}$ và chuẩn hóa qua $\frac{\text{delta}}{|\text{delta}| + 10}$.
+- **Backpropagation:** Lan truyền kết quả mô phỏng ngược về gốc, cập nhật `visits` và `value_sum` theo `value_target = white_score * current_player`.
+- **Tái sử dụng cây (Tree Reuse):** Nhận diện trạng thái tương thích giữa các lượt đánh (cùng trạng thái, sau 1 nước hoặc sau 2 nước thật AI đi và đối thủ đi) thông qua khóa trạng thái `(initial_fen, tuple(move_stack), claim_draw)`. Giữ nguyên thống kê visits và tích lũy thêm ngân sách mô phỏng mới; dọn dẹp các nhánh tổ tiên và anh em cũ ngoài subtree được giữ.
+
 
 ## 3. Cấu trúc thư mục
 
@@ -106,7 +115,8 @@ chess-multi-stage-ai/
 │   ├── test_encoder.py
 │   ├── test_cli.py
 │   ├── test_gui.py
-│   └── test_regressions.py
+│   ├── test_regressions.py
+│   └── test_stage3_mcts.py
 ├── checkpoints/                   # Trọng số .pt; không commit file lớn
 ├── results/
 │   ├── leaderboard.md
@@ -253,7 +263,7 @@ Quy ước `.pt`, metadata/config, dấu value, thứ tự Tùng bàn giao CNN/V
 | Thành viên | Nhánh |
 | :--- | :--- |
 | Thắng | `feat/core-gui-arena`, `feat/stage1-heuristics`, `feat/stage2-tree-search` |
-| Thi | `feat/stage3-mcts-pure` |
+| Thi | `feat/stage3` |
 | Thái | `feat/stage4-sl-cnn`, `feat/stage5-rl-policy` |
 | Tùng | `feat/stage6-alphago-mcts`, `feat/stage7-alphazero` |
 
