@@ -8,6 +8,8 @@ checkpoints/*.pth
 /checkpoints/**/*.pt
 /checkpoints/**/*.pth
 /audit-results.xml
+/results/history.sqlite3*
+/results/web_runs/
 
 # Local report drafts and extraction
 docs/*.docx
