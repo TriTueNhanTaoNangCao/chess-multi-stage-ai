@@ -23,6 +23,7 @@ import chess
 try:
     import torch
     from models.dual_head_resnet import DualHeadResNet
+    from models.initialization import initialize_model
 except ImportError:
     torch = None
     DualHeadResNet = None
@@ -69,7 +70,7 @@ class AlphaZeroAgent(BaseAgent):
 
         # Fallback mode: instantiate default DualHeadResNet if PyTorch is available
         if self.network is None and torch is not None and DualHeadResNet is not None:
-            self.network = DualHeadResNet()
+            self.network = initialize_model(DualHeadResNet, seed)
             self.network.to(self.device)
             self.network.eval()
 
@@ -102,10 +103,10 @@ class AlphaZeroAgent(BaseAgent):
                 model = DualHeadResNet.from_config(model_config)
             else:
                 model = DualHeadResNet()
-            model.load_state_dict(payload["state_dict"], strict=False)
+            model.load_state_dict(payload["state_dict"], strict=True)
         elif isinstance(payload, dict):
             model = DualHeadResNet()
-            model.load_state_dict(payload, strict=False)
+            model.load_state_dict(payload, strict=True)
         elif isinstance(payload, DualHeadResNet):
             model = payload
         else:

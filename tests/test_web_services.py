@@ -1,4 +1,5 @@
 from io import StringIO
+from copy import deepcopy
 import threading
 import time
 
@@ -146,3 +147,52 @@ def test_history_preserves_repetition_policy():
         game.accept(chess.Move.from_uci(move), human=True)
     assert game.result == "1/2-1/2"
     assert replay(game.record()).outcome().result() == "1/2-1/2"
+
+
+@pytest.mark.parametrize("patch", [
+    {"configs": {"white": []}},
+    {"configs": {"white": {"id": []}}},
+    {"started_at": {}},
+    {"white_seconds": float("nan")},
+    {"black_calls": 1.5},
+    {"telemetry": [{}]},
+])
+def test_import_rejects_bad_metadata_without_partial_writes(tmp_path, patch):
+    store = HistoryStore(tmp_path / "history.sqlite3")
+    record = GameSession("A", "B").record()
+    invalid = {**deepcopy(record), **patch}
+    with pytest.raises(ValueError):
+        store.import_tournament({"records": [record, invalid]})
+    assert store.list_games() == []
+
+
+def test_import_counts_unique_insertions_and_keeps_existing_records(tmp_path):
+    store = HistoryStore(tmp_path / "history.sqlite3")
+    record = {**GameSession("A", "B").record(), "id": "same-game"}
+    assert store.import_tournament({"records": [record, record]}) == 1
+    assert len(store.list_games()) == 1
+    assert store.import_tournament({"records": [{**record, "white": "changed"}]}) == 0
+    assert store.list_games()[0]["white"] == "A"
+
+
+def test_import_rolls_back_database_failure(tmp_path):
+    import sqlite3
+    store = HistoryStore(tmp_path / "history.sqlite3")
+    with store.connect() as db:
+        db.execute("""CREATE TRIGGER reject_second BEFORE INSERT ON games
+            WHEN NEW.id = 'second' BEGIN SELECT RAISE(ABORT, 'test failure'); END""")
+    record = GameSession("A", "B").record()
+    with pytest.raises(sqlite3.IntegrityError):
+        store.import_tournament({"records": [{**record, "id": "first"}, {**record, "id": "second"}]})
+    assert store.list_games() == []
+
+
+def test_invalid_new_game_keeps_current_match(controller):
+    controller.start(AgentConfig("human"), AgentConfig("human"))
+    controller.human_move("e2e4", controller.token)
+    before, token = deepcopy(controller.record()), controller.token
+    with pytest.raises(ValueError):
+        controller.start(AgentConfig("human"), AgentConfig("random"), max_plies=0)
+    assert controller.record() == before
+    assert controller.token == token
+    assert not controller.session.finished
