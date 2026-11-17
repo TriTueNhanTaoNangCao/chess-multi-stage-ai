@@ -1,8 +1,8 @@
 """Color-balanced matches; illegal actions/errors forfeit, ply caps are adjudicated draws."""
 from dataclasses import dataclass, asdict, field
 import chess
-from time import perf_counter
 from games.chess.board import ChessBoard
+from arena.session import GameSession, measure_move
 
 @dataclass
 class GameResult:
@@ -21,6 +21,7 @@ class GameResult:
     root_fen: str = ""
     initial_moves: list = field(default_factory=list)
     claim_draw: bool = True
+    telemetry: list = field(default_factory=list)
 
     def to_dict(self):
         return asdict(self)
@@ -40,49 +41,11 @@ def restore_initial_board(record):
 
 
 def play_game(white, black, *, max_plies=300, board=None):
-    if max_plies < 1:
-        raise ValueError("max_plies must be positive")
-    state = board.clone() if board is not None else ChessBoard()
-    initial_fen = state.fen()
-    times, calls, moves = [0.0, 0.0], [0, 0], []
-    root_fen = state.board.root().fen(en_passant="fen")
-    initial_moves = [m.uci() for m in state.board.move_stack]
-    failures = {}
-    for index, agent in enumerate((white, black)):
-        try:
-            agent.reset()
-        except Exception as exc:
-            failures[index] = f"{agent.name}: {type(exc).__name__}: {exc}"
-    result, reason, error = "*", "", ""
-    if failures:
-        result = "1/2-1/2" if len(failures) == 2 else ("0-1" if 0 in failures else "1-0")
-        reason = "double_forfeit" if len(failures) == 2 else "reset_forfeit"
-        error = "; ".join(failures.values())
-    while result == "*" and not state.is_terminal() and len(moves) < max_plies:
-        index = 0 if state.turn else 1
-        agent = (white, black)[index]
-        started = perf_counter()
-        try:
-            move = agent.act(state.clone())
-            if not state.is_legal(move):
-                raise ValueError(f"Illegal action: {move!r}")
-        except Exception as exc:
-            result = "0-1" if index == 0 else "1-0"
-            reason, error = "forfeit", f"{type(exc).__name__}: {exc}"
-            break
-        finally:
-            times[index] += perf_counter() - started
-            calls[index] += 1
-        moves.append(move.uci())
-        state.step(move)
-    if result == "*":
-        outcome = state.outcome()
-        if outcome:
-            result, reason = outcome.result(), outcome.termination.name.lower()
-        else:
-            result, reason = "1/2-1/2", "max_plies_adjudication"
-    return GameResult(white.name, black.name, result, reason, moves, initial_fen,
-                      state.fen(), *times, *calls, error, root_fen, initial_moves, state.claim_draw)
+    session = GameSession(white.name, black.name, board=board, max_plies=max_plies)
+    session.reset_agents((white, black))
+    while not session.finished:
+        session.accept(*measure_move((white, black)[session.index], session.state))
+    return GameResult(**session.record())
 
 def evaluate(agent_a, agent_b, *, games=2, max_plies=300):
     if not isinstance(games, int) or games < 2 or games % 2:

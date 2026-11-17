@@ -2,9 +2,20 @@
 
 Bài tập lớn môn **Trí tuệ Nhân tạo Nâng cao**. Dự án phát triển AI cờ vua qua bảy thế hệ: luật heuristic → tìm kiếm cây → MCTS → học giám sát → reinforcement learning → AlphaGo MCTS → AlphaZero.
 
-Kiến trúc kế thừa cách tổ chức của `connect4-multi-stage-ai`, chuyển luật chơi sang `python-chess`. **Core, GUI/CLI, Arena và Stage 1–2 của Thắng đã hoàn thành**; Stage 3–7 là skeleton bàn giao, chưa được đăng ký làm bot có thể chơi.
+Kiến trúc kế thừa cách tổ chức của `connect4-multi-stage-ai`, chuyển luật chơi sang `python-chess`. Registry hiện có các bot Stage 1–7. Bot học máy cần checkpoint phù hợp để đánh giá năng lực đã huấn luyện; Stage 6–7 có thể khởi tạo mạng ngẫu nhiên nếu không nạp trọng số.
 
-![Pygame dashboard](results/gui_preview.png)
+**GUI web localhost:** chơi với AI, xem hai bot đấu, tổ chức loạt đối đầu giữa hai AI và xem lịch sử lưu trong SQLite. Chạy:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+Mở **http://localhost:8501**. Hướng dẫn cấu hình, phát lại, xuất kết quả và giới hạn vận hành: [GUI Streamlit](docs/WEB_GUI.md). `python main.py` vẫn mở Pygame; `--cli` vẫn chạy terminal.
+
+Giao diện đen–vàng đồng, setup thu gọn phía trên, bàn cờ ở giữa với kéo thả quân; lượng giá và biên bản nước đi bố trí hai bên.
+
+![Chess Lab — GUI Streamlit](results/streamlit_preview.png)
 
 ## 1. Phân công & tiến độ
 
