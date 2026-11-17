@@ -59,14 +59,15 @@ class GameController:
         board = ChessBoard(fen or None)
         configs = {"white": white.metadata(), "black": black.metadata()}
         agents = [white.build(), black.build()]
+        session = GameSession(white.label, black.label, board=board, max_plies=max_plies)
+        session.reset_agents(agents)
         if self.session and not self.session.finished:
             self.stop()
         self.generation += 1
         self.agents = agents
         self.config_objects = (white, black)
         self.configs = configs
-        self.session = GameSession(white.label, black.label, board=board, max_plies=max_plies)
-        self.session.reset_agents(self.agents)
+        self.session = session
         self.id = new_record_id()
         self.run_id = run_id or new_record_id()
         self.started_at, self.ended_at = utc_now(), ""

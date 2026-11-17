@@ -20,6 +20,7 @@ try:
     import torch.nn.functional as F
     from models.cnn_policy import CNNPolicyNetwork
     from models.value_net import ValueNetwork
+    from models.initialization import initialize_model
 except ModuleNotFoundError as err:
     if err.name == "torch" or (err.name and err.name.startswith("torch.")):
         torch = None
@@ -67,11 +68,6 @@ class AlphaGoAgent(BaseAgent):
         self.max_rollout_depth = max_rollout_depth
         self.seed = seed
 
-        if seed is not None:
-            if torch is not None:
-                torch.manual_seed(seed)
-            np.random.seed(seed)
-
         # 1. Xử lý Policy Network
         self.policy_net = policy_net
         if self.policy_net is None and (checkpoint_policy or checkpoint):
@@ -80,7 +76,7 @@ class AlphaGoAgent(BaseAgent):
 
         # Nếu không có checkpoint nhưng torch có sẵn và không chỉ định mạng, khởi tạo mặc định
         if self.policy_net is None and torch is not None and CNNPolicyNetwork is not None:
-            self.policy_net = CNNPolicyNetwork()
+            self.policy_net = initialize_model(CNNPolicyNetwork, seed)
             self.policy_net.to(self.device)
             self.policy_net.eval()
 
@@ -93,7 +89,7 @@ class AlphaGoAgent(BaseAgent):
             self.value_net = self._maybe_load_value_from_generic_checkpoint(checkpoint)
 
         if self.value_net is None and torch is not None and ValueNetwork is not None and self.rollout_weight < 1.0:
-            self.value_net = ValueNetwork()
+            self.value_net = initialize_model(ValueNetwork, None if seed is None else seed + 1)
             self.value_net.to(self.device)
             self.value_net.eval()
 
