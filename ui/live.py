@@ -194,7 +194,7 @@ def _live_match(polling):
                     text=f"Giải đấu · {complete}/{controller.schedule_total} ván hoàn tất")
 
     # 3 Columns Layout: Left (Setup), Center (Board), Right (Moves & Controls)
-    col_left, col_center, col_right = st.columns([1.0, 1.85, 1.15], gap="small")
+    col_left, col_center, col_right = st.columns([1.0, 1.9, 1.1], gap="small")
 
     # Column 1: Left Setup & Eval Panel
     with col_left:
@@ -232,7 +232,7 @@ def _live_match(polling):
                     token=controller.token if game else "idle",
                     interactive=human,
                     flipped=flipped,
-                    caption="Bản ghi đã được lưu" if game and game.finished else "CHESS LAB · THE ART OF THE NEXT MOVE",
+                    caption="",
                 )
                 if event and game:
                     try:

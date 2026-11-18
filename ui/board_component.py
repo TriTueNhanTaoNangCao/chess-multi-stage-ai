@@ -9,10 +9,10 @@ _BOARD = st.components.v2.component(
     "chess_arena_board",
     html='<div class="wrap"><div class="frame"><div class="ranks"></div><div class="board" aria-label="Bàn cờ"></div><div></div><div class="files"></div></div><div class="promotion"></div><p class="hint"></p></div>',
     css="""
-    .wrap {width:100%;max-width:480px;margin:0 auto;font-family:var(--st-font,sans-serif);}
+    .wrap {width:100%;max-width:min(calc(100vh - 150px), 540px);margin:0 auto;font-family:var(--st-font,sans-serif);}
     .frame {display:grid;grid-template-columns:16px 1fr;grid-template-rows:1fr 18px;
-      padding:8px 12px 2px 6px;border-radius:10px;border:1px solid #665b42;
-      background:linear-gradient(145deg,#272a30,#12151b);box-shadow:0 12px 30px #0006,inset 0 1px #e4d0a225;}
+      padding:6px 8px 1px 4px;border-radius:8px;border:1px solid #665b42;
+      background:linear-gradient(145deg,#272a30,#12151b);box-shadow:0 8px 24px #0006,inset 0 1px #e4d0a225;}
     .board {display:grid;grid-template-columns:repeat(8,minmax(0,1fr));aspect-ratio:1;
       border:1px solid #8c7c5d;border-radius:3px;overflow:hidden;}
     .ranks {display:grid;grid-template-rows:repeat(8,1fr);}
@@ -32,11 +32,12 @@ _BOARD = st.components.v2.component(
     .sq[aria-disabled=false].occupied:hover svg {transform:translateY(-2px);}
     .sq.legal:after {content:'';position:absolute;width:20%;height:20%;border-radius:50%;background:#2a261e80;border:1px solid #dcc38a90;pointer-events:none;}
     .sq.legal.occupied:after {width:85%;height:85%;background:none;border:3px solid #e7c889;box-sizing:border-box;}
-    .promotion {display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap;}
-    .promotion:empty {display:none;} .promotion button {padding:8px 14px;border:1px solid #8d784f;
-      border-radius:8px;background:#242219;color:#f0d8a5;font-size:13px;cursor:pointer;}
+    .promotion {display:flex;gap:6px;justify-content:center;margin-top:4px;flex-wrap:wrap;}
+    .promotion:empty {display:none;} .promotion button {padding:5px 10px;border:1px solid #8d784f;
+      border-radius:6px;background:#242219;color:#f0d8a5;font-size:12px;cursor:pointer;}
     .promotion button:hover {background:#3c3423;}
-    .hint {text-align:center;font-size:10px;color:#8d95a3;margin:5px 0 0;}
+    .hint {text-align:center;font-size:10px;color:#8d95a3;margin:2px 0 0;}
+    .hint:empty {display:none;}
     @media(max-width:480px) {.frame {padding:7px 9px 0 3px;grid-template-columns:14px 1fr;grid-template-rows:1fr 16px;}
       .ranks span,.files span {font-size:9px;} .sq {padding:4%;}}
     @media(prefers-reduced-motion:reduce) {.sq,.sq svg {transition:none;}}
