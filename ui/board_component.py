@@ -9,7 +9,7 @@ _BOARD = st.components.v2.component(
     "chess_arena_board",
     html='<div class="wrap"><div class="frame"><div class="ranks"></div><div class="board" aria-label="Bàn cờ"></div><div></div><div class="files"></div></div><div class="promotion"></div><p class="hint"></p></div>',
     css="""
-    .wrap {width:100%;max-width:min(calc(100vh - 150px), 540px);margin:0 auto;font-family:var(--st-font,sans-serif);}
+    .wrap {width:100%;max-width:min(calc(100vh - 160px), 730px);margin:0 auto;font-family:var(--st-font,sans-serif);}
     .frame {display:grid;grid-template-columns:16px 1fr;grid-template-rows:1fr 18px;
       padding:6px 8px 1px 4px;border-radius:8px;border:1px solid #665b42;
       background:linear-gradient(145deg,#272a30,#12151b);box-shadow:0 8px 24px #0006,inset 0 1px #e4d0a225;}

@@ -194,7 +194,7 @@ def _live_match(polling):
                     text=f"Giải đấu · {complete}/{controller.schedule_total} ván hoàn tất")
 
     # 3 Columns Layout: Left (Setup), Center (Board), Right (Moves & Controls)
-    col_left, col_center, col_right = st.columns([1.0, 1.9, 1.1], gap="small")
+    col_left, col_center, col_right = st.columns([1.0, 2.2, 1.0], gap="small")
 
     # Column 1: Left Setup & Eval Panel
     with col_left:

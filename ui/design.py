@@ -9,7 +9,7 @@ def apply_design():
     st.html("""<style>
     /* Compact single-screen layout (zero vertical scrolling required) */
     .stMainBlockContainer, .block-container {
-      padding-top: 0.2rem !important;
+      padding-top: 2.4rem !important;
       padding-bottom: 0.2rem !important;
       padding-left: 1rem !important;
       padding-right: 1rem !important;
@@ -28,7 +28,7 @@ def apply_design():
     }
     .st-key-board_stage {
       width: 100%;
-      max-width: min(calc(100vh - 150px), 540px);
+      max-width: min(calc(100vh - 160px), 730px);
       margin: 0 auto;
     }
     .st-key-setup_bar {
@@ -36,6 +36,7 @@ def apply_design():
       border-color: #34352f;
       box-shadow: 0 4px 16px #00000018;
       padding: 3px 6px !important;
+      margin-bottom: 2px !important;
     }
     .lab-eyebrow { font-size: 9px; letter-spacing: .2em; color: #c9a96e; font-weight: 600; margin: 0 0 2px; }
     .lab-intro h1 { font-size: 20px; font-weight: 600; line-height: 1.2; margin: 2px 0 3px; padding: 0; }
