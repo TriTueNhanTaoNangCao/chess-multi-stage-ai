@@ -1,10 +1,8 @@
-﻿import streamlit as st
+import streamlit as st
 
 from ui.common import bot_picker, agent_title
 from ui.live import live_match
-from ui.design import page_intro
 
-page_intro("Giải đấu", "Hai AI đối đầu qua nhiều ván, luân phiên quân Trắng và Đen.")
 controller = st.session_state.controller
 with st.container(border=True, key="setup_bar", gap="small"):
     first, second, options, launch = st.columns([1.1, 1.1, 0.85, 1], gap="small", vertical_alignment="center")
