@@ -124,6 +124,34 @@ Giải đấu kiểm chứng đối kháng 2 ván cân bằng màu quân giữa 
 | AlphaZero | 1200.0 | 0 / 2 / 0 | 0.0% | 100.0% | 717.54 |
 | Random | 1200.0 | 0 / 2 / 0 | 0.0% | 100.0% | 1.16 |
 
+### 5.2. Đối đầu Đồng hạng Trực tiếp 200 Ván: Stage 6 (AlphaGo) vs Stage 7 (AlphaZero)
+
+Giải đấu đối đầu toàn diện 200 ván đã được tổ chức với cấu hình đồng hạng nghiêm ngặt:
+* **Quy mô:** 200 ván (100 ván Trắng / 100 ván Đen đổi màu quân đối xứng).
+* **Kho khai cuộc:** 50 thế cờ chọn lọc chuẩn quốc tế (2-4 nước đi đầu).
+* **Ngân sách tính toán:** 30 MCTS simulations/nước đi cho cả hai mô hình trên CPU (2 luồng).
+* **Giới hạn số nước:** 300 plies (150 nước đi đầy đủ) đồng bộ chuẩn Stage 4 và Stage 5.
+* **Xác thực toàn vẹn Checkpoint (Audit SHA256):**
+  * Stage 6 Policy: `4d70697035064bfc4be2e505959bb070d4a3afd0c697390b78908605016e1832` (~193 MB, SL + RL).
+  * Stage 6 Value: `93dd82049962b4e8f9c94927879a766ba10fc914f9474dda6a794b3f88ca07ca` (RL Value Network).
+  * Stage 7 AlphaZero: `6c8e5302898c2eb6889890aacf09845215a1d1f79814b91a14267302f74b4ca8` (12 vòng tự chơi, 240 ván).
+
+#### Kết quả Bảng Xếp Hạng Hiệu Năng (Kèm Khoảng Tin Cậy Wilson 95%)
+
+| Agent | Elo | W / D / L | Score | Score % (Wilson 95% CI) | Win % | Draw % | ms/move |
+| :--- | ---: | :---: | ---: | :---: | ---: | ---: | ---: |
+| **AlphaGo (30 sims)** | **1354.5** | **153 / 47 / 0** | **176.5** | **88.2% [0.831, 0.920]** | **76.5%** | **23.5%** | 903.33 |
+| **AlphaZero (30 sims)** | 1045.5 | 0 / 47 / 153 | 23.5 | 11.8% [0.080, 0.169] | 0.0% | 23.5% | 587.94 |
+
+* **Ma trận đối đầu theo màu quân:**
+  * AlphaGo cầm Trắng: 69 thắng, 31 hòa, 0 thua (Tỷ lệ thắng 69.0%).
+  * AlphaGo cầm Đen: 84 thắng, 16 hòa, 0 thua (Tỷ lệ thắng 84.0%).
+* **Thư mục minh chứng đầy đủ:** `results/stage6_vs_stage7/` gồm 4 định dạng chuẩn nhóm (`leaderboard.md`, `leaderboard.csv`, `tournament_results.json`, `history.sqlite3`).
+
+#### Thảo luận & Ý nghĩa Khoa học (Sample Efficiency vs Tabula Rasa)
+1. **Hiệu quả mẫu (Sample Efficiency):** AlphaGo kế thừa Policy 193 MB từ Stage 4 (học có giám sát trên hàng triệu ván cờ Đại kiện tướng) kết hợp hàm Rollout có tri thức giá trị quân cờ chuẩn. Nhờ đó, ở ngân sách tìm kiếm thấp (30 sims), AlphaGo thi triển chiến thuật rất sắc bén.
+2. **Bản chất Tabula Rasa:** AlphaZero tự học từ con số 0 trong 240 ván tự chơi. Mặc dù hàm loss giảm thành công từ 6.47 về 1.05, nhưng để vượt qua tri thức hàng triệu ván cờ người, mô hình Tabula Rasa đòi hỏi hàng triệu ván tự chơi trên cụm siêu máy tính (như DeepMind cần 5.000 TPU và 44 triệu ván). Thực nghiệm đối đầu phản ánh trung thực nguyên lý khoa học về sự đánh đổi giữa Tri thức chuyên gia (Domain Knowledge) và Học từ số 0 khi bị giới hạn tài nguyên tính toán.
+
 ---
 
 ## 6. Hướng dẫn Chạy và Thao tác

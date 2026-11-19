@@ -191,12 +191,12 @@ def verify_checkpoints(allow_untrained: bool = False, seed: int = 42) -> Dict[st
     problems: List[str] = []
 
     print("=" * 75)
-    print("  KIỂM TRA CHECKPOINT MÔ HÌNH:")
+    print("  KIEM TRA CHECKPOINT MO HINH:")
     for name, path in targets.items():
         if not path.is_file():
-            hashes[name] = "THIẾU (dùng mạng ngẫu nhiên)"
-            problems.append(f"{name}: thiếu file {path}")
-            print(f"  - {name:<18s}: {path} [THIẾU]")
+            hashes[name] = "THIEU (dung mang ngau nhien)"
+            problems.append(f"{name}: thieu file {path}")
+            print(f"  - {name:<18s}: {path} [THIEU]")
             continue
         sha = compute_sha256(path)
         trained, why = _is_trained(name, path)
@@ -204,8 +204,8 @@ def verify_checkpoints(allow_untrained: bool = False, seed: int = 42) -> Dict[st
         if trained:
             hashes[name] = sha
         else:
-            hashes[name] = f"{sha} (CHƯA HUẤN LUYỆN)"
-            problems.append(f"{name}: {path} chưa huấn luyện ({why})")
+            hashes[name] = f"{sha} (CHUA HUAN LUYEN)"
+            problems.append(f"{name}: {path} chua huan luyen ({why})")
     print("=" * 75)
 
     if problems:
@@ -381,17 +381,17 @@ def run_benchmark(
     history = HistoryStore(out_path / "history.sqlite3")
     run_id = new_record_id()
 
-    # 2. In thông số cấu hình ván đấu
+    # 2. In thông số cấu hình ván đấu (ASCII de tranh loi font tren PowerShell Windows)
     print("=" * 75)
-    print("  ĐỐI ĐẦU ĐỒNG HẠNG: STAGE 6 (AlphaGo) vs STAGE 7 (AlphaZero)")
-    print(f"  Tổng số ván: {games} ({games // 2} ván Trắng / {games // 2} ván Đen)")
-    print(f"  Kho khai cuộc: {len(OPENING_BOOK)} thế cờ chọn lọc (Đối xứng màu quân theo cặp)")
-    print(f"  Số lượt mô phỏng MCTS: {simulations} sims/nước")
-    print(f"  Tài nguyên tính toán: {device} | {actual_threads} luồng CPU")
-    print(f"  Dirichlet Noise (AlphaZero): {'BẬT (--az-noise)' if az_noise else 'TẮT (Đối xứng điều kiện)'}")
-    print(f"  Thư mục xuất báo cáo: {out_path.resolve()}")
+    print("  DOI DAU DONG HANG: STAGE 6 (AlphaGo) vs STAGE 7 (AlphaZero)")
+    print(f"  Tong so van: {games} ({games // 2} van Trang / {games // 2} van Den)")
+    print(f"  Kho khai cuoc: {len(OPENING_BOOK)} the co chon loc (Doi xung mau quan theo cap)")
+    print(f"  So luot mo phong MCTS: {simulations} sims/nuoc")
+    print(f"  Tai nguyen tinh toan: {device} | {actual_threads} luong CPU")
+    print(f"  Dirichlet Noise (AlphaZero): {'BAT (--az-noise)' if az_noise else 'TAT (Doi xung dieu kien)'}")
+    print(f"  Thu muc xuat bao cao: {out_path.resolve()}")
     print("=" * 75)
-    print("Luật kết thúc: Chiếu hết, Stalemate, Lặp 3 lần, Không đủ quân, Giới hạn nước đi (max_plies_adjudication)")
+    print("Luat ket thuc: Chieu het, Stalemate, Lap 3 lan, Khong du quan, Gioi han nuoc di (max_plies_adjudication)")
     print("-" * 75)
 
     name_st6 = f"AlphaGo ({simulations} sims)"
@@ -501,12 +501,13 @@ def run_benchmark(
         reason = record.reason
         reason_counts[reason] = reason_counts.get(reason, 0) + 1
 
-        # In tiến trình từng ván kèm thế mở cờ
+        # In tiến trình từng ván kèm thế mở cờ (ASCII an toàn cho PowerShell console)
         pct = (game_num / games) * 100
         print(
-            f"[{game_num:3d}/{games}] ({pct:5.1f}%) Trắng: {white.name:<18} | Đen: {black.name:<18} "
+            f"[{game_num:3d}/{games}] ({pct:5.1f}%) Trang: {white.name:<18} | Den: {black.name:<18} "
             f"-> {record.result:7s} ({record.reason:<14}, {len(record.moves):3d} plies, {game_dur:4.1f}s) "
-            f"[KC: {initial_moves_desc}]"
+            f"[KC: {initial_moves_desc}]",
+            flush=True,
         )
 
         # Cập nhật tóm tắt định kỳ mỗi 5 ván và tự động đồng bộ kết quả
@@ -516,11 +517,12 @@ def run_benchmark(
             draws = stats[name_st6]["draws"]
             cur_elapsed = time.time() - start_time
             print(
-                f"  >>> Tóm tắt sau {game_num}/{games} ván ({game_num/games*100:.1f}%): "
-                f"{name_st6}: {st6_w} thắng | {name_st7}: {st7_w} thắng | Hòa: {draws} "
-                f"[Đã chạy: {cur_elapsed/60:.1f} phút]"
+                f"  >>> Tom tat sau {game_num}/{games} van ({game_num/games*100:.1f}%): "
+                f"{name_st6}: {st6_w} thang | {name_st7}: {st7_w} thang | Hoa: {draws} "
+                f"[Da chay: {cur_elapsed/60:.1f} phut]",
+                flush=True,
             )
-            print("-" * 75)
+            print("-" * 75, flush=True)
             save_benchmark_artifacts(
                 out_path=out_path,
                 stats=stats,
@@ -560,31 +562,31 @@ def run_benchmark(
         name_st7=name_st7,
     )
 
-    # In kết quả hoàn thành ra màn hình
+    # In kết quả hoàn thành ra màn hình (ASCII an toàn cho PowerShell console)
     print("\n" + "=" * 75)
-    print(f"🎉 HOÀN THÀNH TOÀN BỘ {games} VÁN ĐẤU TRONG {total_time:.1f} GIÂY ({total_time/60:.1f} PHÚT)!")
+    print(f"HOAN THANH TOAN BO {games} VAN DAU TRONG {total_time:.1f} GIAY ({total_time/60:.1f} PHUT)!")
     print("=" * 75)
-    print("BẢNG XẾP HẠNG CUỐI CÙNG (KÈM KHOẢNG TIN CẬY WILSON 95%):")
+    print("BANG XEP HANG CUOI CUNG (KEM KHOANG TIN CAY WILSON 95%):")
     for r in rows:
         print(
-            f"  • {r['agent']:24s} | Elo: {r['elo']:6.1f} | Thắng: {r['wins']:3d} | Hòa: {r['draws']:3d} | "
+            f"  - {r['agent']:24s} | Elo: {r['elo']:6.1f} | Thang: {r['wins']:3d} | Hoa: {r['draws']:3d} | "
             f"Thua: {r['losses']:3d} | Score: {r['score_rate']:.1%} {r['score_ci_95']} | Win: {r['win_rate']:5.1%}"
         )
 
-    print("\nMA TRẬN ĐỐI ĐẦU THEO MÀU QUÂN:")
+    print("\nMA TRAN DOI DAU THEO MAU QUAN:")
     for tag, data in matchup_matrix.items():
         wr = data["wins"] / data["games"] if data["games"] else 0.0
-        print(f"  • {data['name']:24s} | {data['games']:3d} ván | Thắng: {data['wins']:3d} | Hòa: {data['draws']:3d} | Thua: {data['losses']:3d} | Win: {wr:5.1%}")
+        print(f"  - {data['name']:28s} | {data['games']:3d} van | Thang: {data['wins']:3d} | Hoa: {data['draws']:3d} | Thua: {data['losses']:3d} | Win: {wr:5.1%}")
 
-    print("\nPHÂN LOẠI LÝ DO KẾT THÚC:")
+    print("\nPHAN LOAI LY DO KET THUC:")
     for rk, rv in reason_counts.items():
-        print(f"  • {rk:25s}: {rv:3d} ván ({(rv/games)*100:4.1f}%)")
+        print(f"  - {rk:25s}: {rv:3d} van ({(rv/games)*100:4.1f}%)")
 
-    print(f"\nĐã xuất toàn bộ kết quả vào: {out_path.resolve()}/")
-    print(f"  1. leaderboard.md (Bảng xếp hạng markdown kèm Wilson 95% CI và SHA256)")
-    print(f"  2. leaderboard.csv (Số liệu bảng xếp hạng CSV)")
-    print(f"  3. tournament_results.json (Dữ liệu JSON chi tiết kèm ván đấu và config)")
-    print(f"  4. history.sqlite3 (Cơ sở dữ liệu SQLite ván cờ)")
+    print(f"\nDa xuat toan bo ket qua vao: {out_path.resolve()}/")
+    print(f"  1. leaderboard.md (Bang xep hang markdown kem Wilson 95% CI va SHA256)")
+    print(f"  2. leaderboard.csv (So lieu bang xep hang CSV)")
+    print(f"  3. tournament_results.json (Du lieu JSON chi tiet kem van dau va config)")
+    print(f"  4. history.sqlite3 (Co so du lieu SQLite van co)")
     print("=" * 75)
 
     return payload
