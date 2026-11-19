@@ -4,9 +4,10 @@ Tác giả: Phan Thanh Tùng (Tùng).
 Hợp tác đồ án: chess-multi-stage-ai (SGU).
 
 Tối ưu hóa & Chuẩn hóa Đánh giá:
-- Kho Khai Cuộc: 50 thế trận khai cuộc chọn lọc chuẩn cờ vua.
-- Ghép cặp đối xứng (Color-Balanced Opening Match): Mỗi thế trận khai cuộc được
-  đấu đúng 2 ván đổi màu quân (Ván A: AlphaGo Trắng, Ván B: AlphaZero Trắng).
+- Kho khai cuộc: 50 thế 2-4 nước tự soạn (không phải sách khai cuộc chuẩn).
+- Ghép cặp đổi màu: 2 ván liên tiếp dùng chung một khai cuộc (AlphaGo Trắng rồi
+  AlphaZero Trắng). Với 200 ván và 50 khai cuộc, mỗi khai cuộc xuất hiện 4 ván
+  (2 cặp); các ván khác nhau nhờ seed.
 - Đồng bộ chính xác số mô phỏng MCTS (agent.mcts.simulations == simulations).
 - Tắt nhiễu Dirichlet không đối xứng (chỉ kích hoạt khi có cờ --az-noise).
 - Hỗ trợ cờ --device, --az-noise, --allow-untrained.
@@ -358,13 +359,13 @@ def save_benchmark_artifacts(
 
 def run_benchmark(
     games: int = 200,
-    max_plies: int = 200,
+    max_plies: int = 300,
     simulations: int = 30,
     threads: int = 2,
     device: str = "cpu",
     az_noise: bool = False,
     allow_untrained: bool = False,
-    output_dir: str = "results/stage6_vs_stage7_30sims",
+    output_dir: str = "results/stage6_vs_stage7",
     seed: int = 42,
 ) -> Dict[str, Any]:
     """Chạy toàn bộ benchmark đối kháng trực tiếp và xuất kết quả."""
@@ -592,7 +593,7 @@ def run_benchmark(
 def main():
     parser = argparse.ArgumentParser(description="Đối đầu trực tiếp: Stage 6 (AlphaGo) vs Stage 7 (AlphaZero)")
     parser.add_argument("--games", type=int, default=200, help="Tổng số ván đấu (mặc định: 200)")
-    parser.add_argument("--max-plies", type=int, default=200, help="Giới hạn số nước đi mỗi ván (mặc định: 200)")
+    parser.add_argument("--max-plies", type=int, default=300, help="Giới hạn số nước đi mỗi ván (mặc định: 300)")
     parser.add_argument("--simulations", type=int, default=30, help="Số lượt mô phỏng MCTS/nước (mặc định: 30)")
     parser.add_argument("--threads", type=int, default=2, help="Số luồng CPU cho PyTorch (mặc định: 2)")
     parser.add_argument("--device", type=str, default="cpu", help="Thiết bị tính toán: cpu hoặc cuda (mặc định: cpu)")
