@@ -25,6 +25,18 @@ import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+# Đảm bảo stdout/stderr luôn dùng UTF-8 với fallback an toàn kể cả khi pipe qua Tee-Object trên Windows
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+    except Exception:
+        pass
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -308,25 +320,23 @@ def train(config_input: Optional[Union[Dict[str, Any], AlphaZeroTrainConfig]] = 
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     log_csv_path = ckpt_dir / "training_log.csv"
 
-    # Khởi tạo file log CSV nếu chưa có hoặc bắt đầu huấn luyện mới
-    file_exists = log_csv_path.is_file()
-    log_file = log_csv_path.open("a", newline="", encoding="utf-8")
+    # Khởi tạo file log CSV mới (tránh trộn với log cũ)
+    log_file = log_csv_path.open("w", newline="", encoding="utf-8")
     log_writer = csv.DictWriter(
         log_file,
         fieldnames=["iteration", "games", "samples", "total_samples", "loss", "policy_loss", "value_loss", "elapsed_seconds"],
     )
-    if not file_exists or log_csv_path.stat().st_size == 0:
-        log_writer.writeheader()
-        log_file.flush()
+    log_writer.writeheader()
+    log_file.flush()
 
     replay_buffer = AlphaZeroReplayBuffer()
     all_metrics: List[Dict[str, float]] = []
 
     print("=" * 70)
-    print("  BẮT ĐẦU HUẤN LUYỆN ALPHAZERO TỰ CHƠI (STAGE 7)")
-    print(f"  Vòng lặp: {config.num_iterations} iterations | Ván/vòng: {config.games_per_iteration} games")
+    print("  BAT DAU HUAN LUYEN ALPHAZERO TU CHOI (STAGE 7)")
+    print(f"  Vong lap: {config.num_iterations} iterations | Van/vong: {config.games_per_iteration} games")
     print(f"  MCTS Sims: {config.mcts_simulations} sims | Max Plies: {config.max_plies_per_game} plies")
-    print(f"  Thiết bị: {config.device} | Checkpoint Dir: {ckpt_dir}")
+    print(f"  Thiet bi: {config.device} | Checkpoint Dir: {ckpt_dir}")
     print("=" * 70)
 
     for it in range(1, config.num_iterations + 1):
@@ -369,7 +379,7 @@ def train(config_input: Optional[Union[Dict[str, Any], AlphaZeroTrainConfig]] = 
         print(
             f"[{it:3d}/{config.num_iterations}] Loss: {metrics['loss']:.4f} "
             f"(Pol: {metrics['policy_loss']:.4f}, Val: {metrics['value_loss']:.4f}) | "
-            f"+{new_samples:3d} mẫu (Tổng: {len(replay_buffer):4d}) | {t_it_elapsed:5.1f}s"
+            f"+{new_samples:3d} samples (Total: {len(replay_buffer):4d}) | {t_it_elapsed:5.1f}s"
         )
 
     log_file.close()

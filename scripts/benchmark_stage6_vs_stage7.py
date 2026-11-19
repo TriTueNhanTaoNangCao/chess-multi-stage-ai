@@ -4,9 +4,10 @@ Tác giả: Phan Thanh Tùng (Tùng).
 Hợp tác đồ án: chess-multi-stage-ai (SGU).
 
 Tối ưu hóa & Chuẩn hóa Đánh giá:
-- Kho Khai Cuộc: 50 thế trận khai cuộc chọn lọc chuẩn cờ vua.
-- Ghép cặp đối xứng (Color-Balanced Opening Match): Mỗi thế trận khai cuộc được
-  đấu đúng 2 ván đổi màu quân (Ván A: AlphaGo Trắng, Ván B: AlphaZero Trắng).
+- Kho khai cuộc: 50 thế 2-4 nước tự soạn (không phải sách khai cuộc chuẩn).
+- Ghép cặp đổi màu: 2 ván liên tiếp dùng chung một khai cuộc (AlphaGo Trắng rồi
+  AlphaZero Trắng). Với 200 ván và 50 khai cuộc, mỗi khai cuộc xuất hiện 4 ván
+  (2 cặp); các ván khác nhau nhờ seed.
 - Đồng bộ chính xác số mô phỏng MCTS (agent.mcts.simulations == simulations).
 - Tắt nhiễu Dirichlet không đối xứng (chỉ kích hoạt khi có cờ --az-noise).
 - Hỗ trợ cờ --device, --az-noise, --allow-untrained.
@@ -37,8 +38,17 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-# Đảm bảo stdout flush ngay lập tức trên Windows PowerShell
-sys.stdout.reconfigure(line_buffering=True)
+# Đảm bảo stdout/stderr luôn dùng UTF-8 với fallback an toàn kể cả khi pipe qua Tee-Object trên Windows
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+    except Exception:
+        pass
 
 try:
     import torch
@@ -143,84 +153,71 @@ def create_opening_board(pair_index: int) -> ChessBoard:
     return board
 
 
+def _is_trained(name: str, path: Path) -> tuple[bool, str]:
+    """Nhận diện checkpoint chưa huấn luyện (do script tự tạo) bằng dấu vết huấn luyện trong file."""
+    if torch is None:
+        return True, "không kiểm tra được (thiếu PyTorch)"
+    payload = torch.load(path, map_location="cpu", weights_only=False)
+    if not isinstance(payload, dict):
+        return False, "định dạng không hợp lệ"
+    metrics = payload.get("metrics") or {}
+    if name == "Stage 7 AlphaZero":
+        # train() luôn ghi policy_loss và value_loss; file tự tạo chỉ có {"loss": ...}
+        ok = "policy_loss" in metrics and "value_loss" in metrics
+        if not ok:
+            return False, "metrics không có policy_loss/value_loss (file tự tạo)"
+        tc = payload.get("training_config") or {}
+        games = tc.get("num_iterations", 0) * tc.get("games_per_iteration", 0)
+        if games < 100:
+            return False, f"chỉ {games} ván tự chơi (quy mô kiểm thử)"
+        return True, f"có policy_loss/value_loss ({games} ván tự chơi)"
+    traces = {"epoch", "metrics", "training_config", "optimizer_state_dict", "checkpoint_type", "best_val_loss"}
+    found = sorted(traces & set(payload.keys()))
+    return bool(found), (f"có dấu vết huấn luyện: {', '.join(found)}" if found else "không có dấu vết huấn luyện (mạng khởi tạo ngẫu nhiên)")
+
+
 def verify_checkpoints(allow_untrained: bool = False, seed: int = 42) -> Dict[str, str]:
+    """Kiểm tra checkpoint tồn tại VÀ đã được huấn luyện. Không tạo file nào.
+
+    Thiếu file hoặc file chưa huấn luyện: dừng chương trình, trừ khi có --allow-untrained
+    (khi đó agent tự dùng mạng khởi tạo ngẫu nhiên và kết quả được gán nhãn rõ).
     """
-    Kiểm tra sự tồn tại và tính toàn vẹn của các file checkpoint mô hình.
-    Minh bạch mã SHA256 cho báo cáo nghiệm thu.
-    """
-    ckpt_targets = {
+    targets = {
         "Stage 6 Policy": Path("checkpoints/stage6/policy.pt"),
         "Stage 6 Value": Path("checkpoints/stage6/value.pt"),
         "Stage 7 AlphaZero": Path("checkpoints/stage7/best.pt"),
     }
-
     hashes: Dict[str, str] = {}
-    missing: List[Tuple[str, Path]] = []
+    problems: List[str] = []
 
     print("=" * 75)
-    print("  KIỂM TRA CHECKPOINT MÔ HÌNH (AUDIT REPORT):")
-    for name, path in ckpt_targets.items():
-        if path.is_file():
-            sha = compute_sha256(path)
+    print("  KIEM TRA CHECKPOINT MO HINH:")
+    for name, path in targets.items():
+        if not path.is_file():
+            hashes[name] = "THIEU (dung mang ngau nhien)"
+            problems.append(f"{name}: thieu file {path}")
+            print(f"  - {name:<18s}: {path} [THIEU]")
+            continue
+        sha = compute_sha256(path)
+        trained, why = _is_trained(name, path)
+        print(f"  - {name:<18s}: {path} | SHA256 {sha[:16]}... | {why}")
+        if trained:
             hashes[name] = sha
-            print(f"  • {name:<18s}: {str(path):<32s} (SHA256: {sha})")
         else:
-            hashes[name] = "THIẾU"
-            missing.append((name, path))
-            print(f"  • {name:<18s}: {str(path):<32s} [THIẾU]")
+            hashes[name] = f"{sha} (CHUA HUAN LUYEN)"
+            problems.append(f"{name}: {path} chua huan luyen ({why})")
     print("=" * 75)
 
-    if missing:
+    if problems:
         if not allow_untrained:
-            err_details = "\n".join(f"    - {name}: {path}" for name, path in missing)
-            raise FileNotFoundError(
-                f"\n[LỖI] Thiếu {len(missing)} checkpoint cần thiết cho benchmark:\n"
-                f"{err_details}\n\n"
-                f"Vui lòng chuẩn bị checkpoint hợp lệ theo hướng dẫn (checkpoints/HUONG_DAN_SUA_LAI.md).\n"
-                f"Nếu muốn chạy thử nghiệm với mạng chưa huấn luyện (untrained baseline), hãy thêm cờ: --allow-untrained"
+            raise SystemExit(
+                "\n[LỖI] Checkpoint không hợp lệ cho benchmark:\n  - " + "\n  - ".join(problems)
+                + "\nĐặt checkpoint đã huấn luyện vào đúng đường dẫn (xóa file tự tạo trước), "
+                  "hoặc thêm --allow-untrained nếu cố ý dùng mạng chưa huấn luyện."
             )
-        else:
-            print("  ⚠️  CẢNH BÁO: Đang chạy với cờ --allow-untrained.")
-            print("      Các checkpoint còn thiếu sẽ được khởi tạo tạm thời với trọng số ngẫu nhiên.")
-            if torch is not None:
-                for name, path in missing:
-                    path.parent.mkdir(parents=True, exist_ok=True)
-                    if "policy" in str(path):
-                        from models.cnn_policy import CNNPolicyNetwork
-                        from games.chess.encoder import NUM_ACTIONS
-                        p_model = CNNPolicyNetwork()
-                        torch.save({
-                            "format_version": 1,
-                            "stage": 4,
-                            "model_class": "CNNPolicyNetwork",
-                            "model_config": p_model.get_config(),
-                            "encoder_version": "hwc14-white-v1",
-                            "action_version": "az73-rankflip-v1",
-                            "num_actions": NUM_ACTIONS,
-                            "seed": seed,
-                            "state_dict": p_model.state_dict(),
-                        }, path)
-                    elif "value" in str(path):
-                        from models.value_net import ValueNetwork
-                        v_model = ValueNetwork()
-                        torch.save({
-                            "format_version": 1,
-                            "stage": 5,
-                            "model_class": "ValueNetwork",
-                            "model_config": v_model.get_config(),
-                            "encoder_version": "hwc14-white-v1",
-                            "value_perspective": "side_to_move",
-                            "seed": seed + 1,
-                            "state_dict": v_model.state_dict(),
-                        }, path)
-                    elif "best" in str(path):
-                        from models.dual_head_resnet import DualHeadResNet
-                        from training.stage7_train_alphazero import save_checkpoint, AlphaZeroTrainConfig
-                        m = DualHeadResNet()
-                        cfg = AlphaZeroTrainConfig(seed=seed)
-                        save_checkpoint(m, cfg, step=1, metrics={"loss": 0.5})
-                    hashes[name] = compute_sha256(path)
-
+        print("  CẢNH BÁO: --allow-untrained, các mạng sau là mạng chưa huấn luyện:")
+        for p in problems:
+            print("   *", p)
     return hashes
 
 
@@ -362,13 +359,13 @@ def save_benchmark_artifacts(
 
 def run_benchmark(
     games: int = 200,
-    max_plies: int = 200,
+    max_plies: int = 300,
     simulations: int = 30,
     threads: int = 2,
     device: str = "cpu",
     az_noise: bool = False,
     allow_untrained: bool = False,
-    output_dir: str = "results/stage6_vs_stage7_30sims",
+    output_dir: str = "results/stage6_vs_stage7",
     seed: int = 42,
 ) -> Dict[str, Any]:
     """Chạy toàn bộ benchmark đối kháng trực tiếp và xuất kết quả."""
@@ -384,17 +381,17 @@ def run_benchmark(
     history = HistoryStore(out_path / "history.sqlite3")
     run_id = new_record_id()
 
-    # 2. In thông số cấu hình ván đấu
+    # 2. In thông số cấu hình ván đấu (ASCII de tranh loi font tren PowerShell Windows)
     print("=" * 75)
-    print("  ĐỐI ĐẦU ĐỒNG HẠNG: STAGE 6 (AlphaGo) vs STAGE 7 (AlphaZero)")
-    print(f"  Tổng số ván: {games} ({games // 2} ván Trắng / {games // 2} ván Đen)")
-    print(f"  Kho khai cuộc: {len(OPENING_BOOK)} thế cờ chọn lọc (Đối xứng màu quân theo cặp)")
-    print(f"  Số lượt mô phỏng MCTS: {simulations} sims/nước")
-    print(f"  Tài nguyên tính toán: {device} | {actual_threads} luồng CPU")
-    print(f"  Dirichlet Noise (AlphaZero): {'BẬT (--az-noise)' if az_noise else 'TẮT (Đối xứng điều kiện)'}")
-    print(f"  Thư mục xuất báo cáo: {out_path.resolve()}")
+    print("  DOI DAU DONG HANG: STAGE 6 (AlphaGo) vs STAGE 7 (AlphaZero)")
+    print(f"  Tong so van: {games} ({games // 2} van Trang / {games // 2} van Den)")
+    print(f"  Kho khai cuoc: {len(OPENING_BOOK)} the co chon loc (Doi xung mau quan theo cap)")
+    print(f"  So luot mo phong MCTS: {simulations} sims/nuoc")
+    print(f"  Tai nguyen tinh toan: {device} | {actual_threads} luong CPU")
+    print(f"  Dirichlet Noise (AlphaZero): {'BAT (--az-noise)' if az_noise else 'TAT (Doi xung dieu kien)'}")
+    print(f"  Thu muc xuat bao cao: {out_path.resolve()}")
     print("=" * 75)
-    print("Luật kết thúc: Chiếu hết, Stalemate, Lặp 3 lần, Không đủ quân, Giới hạn nước đi (max_plies_adjudication)")
+    print("Luat ket thuc: Chieu het, Stalemate, Lap 3 lan, Khong du quan, Gioi han nuoc di (max_plies_adjudication)")
     print("-" * 75)
 
     name_st6 = f"AlphaGo ({simulations} sims)"
@@ -504,12 +501,13 @@ def run_benchmark(
         reason = record.reason
         reason_counts[reason] = reason_counts.get(reason, 0) + 1
 
-        # In tiến trình từng ván kèm thế mở cờ
+        # In tiến trình từng ván kèm thế mở cờ (ASCII an toàn cho PowerShell console)
         pct = (game_num / games) * 100
         print(
-            f"[{game_num:3d}/{games}] ({pct:5.1f}%) Trắng: {white.name:<18} | Đen: {black.name:<18} "
+            f"[{game_num:3d}/{games}] ({pct:5.1f}%) Trang: {white.name:<18} | Den: {black.name:<18} "
             f"-> {record.result:7s} ({record.reason:<14}, {len(record.moves):3d} plies, {game_dur:4.1f}s) "
-            f"[KC: {initial_moves_desc}]"
+            f"[KC: {initial_moves_desc}]",
+            flush=True,
         )
 
         # Cập nhật tóm tắt định kỳ mỗi 5 ván và tự động đồng bộ kết quả
@@ -519,11 +517,12 @@ def run_benchmark(
             draws = stats[name_st6]["draws"]
             cur_elapsed = time.time() - start_time
             print(
-                f"  >>> Tóm tắt sau {game_num}/{games} ván ({game_num/games*100:.1f}%): "
-                f"{name_st6}: {st6_w} thắng | {name_st7}: {st7_w} thắng | Hòa: {draws} "
-                f"[Đã chạy: {cur_elapsed/60:.1f} phút]"
+                f"  >>> Tom tat sau {game_num}/{games} van ({game_num/games*100:.1f}%): "
+                f"{name_st6}: {st6_w} thang | {name_st7}: {st7_w} thang | Hoa: {draws} "
+                f"[Da chay: {cur_elapsed/60:.1f} phut]",
+                flush=True,
             )
-            print("-" * 75)
+            print("-" * 75, flush=True)
             save_benchmark_artifacts(
                 out_path=out_path,
                 stats=stats,
@@ -563,31 +562,31 @@ def run_benchmark(
         name_st7=name_st7,
     )
 
-    # In kết quả hoàn thành ra màn hình
+    # In kết quả hoàn thành ra màn hình (ASCII an toàn cho PowerShell console)
     print("\n" + "=" * 75)
-    print(f"🎉 HOÀN THÀNH TOÀN BỘ {games} VÁN ĐẤU TRONG {total_time:.1f} GIÂY ({total_time/60:.1f} PHÚT)!")
+    print(f"HOAN THANH TOAN BO {games} VAN DAU TRONG {total_time:.1f} GIAY ({total_time/60:.1f} PHUT)!")
     print("=" * 75)
-    print("BẢNG XẾP HẠNG CUỐI CÙNG (KÈM KHOẢNG TIN CẬY WILSON 95%):")
+    print("BANG XEP HANG CUOI CUNG (KEM KHOANG TIN CAY WILSON 95%):")
     for r in rows:
         print(
-            f"  • {r['agent']:24s} | Elo: {r['elo']:6.1f} | Thắng: {r['wins']:3d} | Hòa: {r['draws']:3d} | "
+            f"  - {r['agent']:24s} | Elo: {r['elo']:6.1f} | Thang: {r['wins']:3d} | Hoa: {r['draws']:3d} | "
             f"Thua: {r['losses']:3d} | Score: {r['score_rate']:.1%} {r['score_ci_95']} | Win: {r['win_rate']:5.1%}"
         )
 
-    print("\nMA TRẬN ĐỐI ĐẦU THEO MÀU QUÂN:")
+    print("\nMA TRAN DOI DAU THEO MAU QUAN:")
     for tag, data in matchup_matrix.items():
         wr = data["wins"] / data["games"] if data["games"] else 0.0
-        print(f"  • {data['name']:24s} | {data['games']:3d} ván | Thắng: {data['wins']:3d} | Hòa: {data['draws']:3d} | Thua: {data['losses']:3d} | Win: {wr:5.1%}")
+        print(f"  - {data['name']:28s} | {data['games']:3d} van | Thang: {data['wins']:3d} | Hoa: {data['draws']:3d} | Thua: {data['losses']:3d} | Win: {wr:5.1%}")
 
-    print("\nPHÂN LOẠI LÝ DO KẾT THÚC:")
+    print("\nPHAN LOAI LY DO KET THUC:")
     for rk, rv in reason_counts.items():
-        print(f"  • {rk:25s}: {rv:3d} ván ({(rv/games)*100:4.1f}%)")
+        print(f"  - {rk:25s}: {rv:3d} van ({(rv/games)*100:4.1f}%)")
 
-    print(f"\nĐã xuất toàn bộ kết quả vào: {out_path.resolve()}/")
-    print(f"  1. leaderboard.md (Bảng xếp hạng markdown kèm Wilson 95% CI và SHA256)")
-    print(f"  2. leaderboard.csv (Số liệu bảng xếp hạng CSV)")
-    print(f"  3. tournament_results.json (Dữ liệu JSON chi tiết kèm ván đấu và config)")
-    print(f"  4. history.sqlite3 (Cơ sở dữ liệu SQLite ván cờ)")
+    print(f"\nDa xuat toan bo ket qua vao: {out_path.resolve()}/")
+    print(f"  1. leaderboard.md (Bang xep hang markdown kem Wilson 95% CI va SHA256)")
+    print(f"  2. leaderboard.csv (So lieu bang xep hang CSV)")
+    print(f"  3. tournament_results.json (Du lieu JSON chi tiet kem van dau va config)")
+    print(f"  4. history.sqlite3 (Co so du lieu SQLite van co)")
     print("=" * 75)
 
     return payload
@@ -596,13 +595,13 @@ def run_benchmark(
 def main():
     parser = argparse.ArgumentParser(description="Đối đầu trực tiếp: Stage 6 (AlphaGo) vs Stage 7 (AlphaZero)")
     parser.add_argument("--games", type=int, default=200, help="Tổng số ván đấu (mặc định: 200)")
-    parser.add_argument("--max-plies", type=int, default=200, help="Giới hạn số nước đi mỗi ván (mặc định: 200)")
+    parser.add_argument("--max-plies", type=int, default=300, help="Giới hạn số nước đi mỗi ván (mặc định: 300)")
     parser.add_argument("--simulations", type=int, default=30, help="Số lượt mô phỏng MCTS/nước (mặc định: 30)")
     parser.add_argument("--threads", type=int, default=2, help="Số luồng CPU cho PyTorch (mặc định: 2)")
     parser.add_argument("--device", type=str, default="cpu", help="Thiết bị tính toán: cpu hoặc cuda (mặc định: cpu)")
     parser.add_argument("--az-noise", action="store_true", help="Bật Dirichlet exploration noise cho AlphaZero (mặc định: Tắt)")
     parser.add_argument("--allow-untrained", action="store_true", help="Cho phép chạy với mạng khởi tạo ngẫu nhiên nếu thiếu checkpoint")
-    parser.add_argument("--output-dir", default="results/stage6_vs_stage7_30sims", help="Thư mục xuất file kết quả")
+    parser.add_argument("--output-dir", default="results/stage6_vs_stage7", help="Thư mục xuất file kết quả")
     parser.add_argument("--seed", type=int, default=42, help="Seed ngẫu nhiên (mặc định: 42)")
 
     args = parser.parse_args()
