@@ -308,16 +308,14 @@ def train(config_input: Optional[Union[Dict[str, Any], AlphaZeroTrainConfig]] = 
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     log_csv_path = ckpt_dir / "training_log.csv"
 
-    # Khởi tạo file log CSV nếu chưa có hoặc bắt đầu huấn luyện mới
-    file_exists = log_csv_path.is_file()
-    log_file = log_csv_path.open("a", newline="", encoding="utf-8")
+    # Khởi tạo file log CSV mới (tránh trộn với log cũ)
+    log_file = log_csv_path.open("w", newline="", encoding="utf-8")
     log_writer = csv.DictWriter(
         log_file,
         fieldnames=["iteration", "games", "samples", "total_samples", "loss", "policy_loss", "value_loss", "elapsed_seconds"],
     )
-    if not file_exists or log_csv_path.stat().st_size == 0:
-        log_writer.writeheader()
-        log_file.flush()
+    log_writer.writeheader()
+    log_file.flush()
 
     replay_buffer = AlphaZeroReplayBuffer()
     all_metrics: List[Dict[str, float]] = []

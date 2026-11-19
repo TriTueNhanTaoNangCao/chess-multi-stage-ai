@@ -143,84 +143,65 @@ def create_opening_board(pair_index: int) -> ChessBoard:
     return board
 
 
+def _is_trained(name: str, path: Path) -> tuple[bool, str]:
+    """Nhận diện checkpoint chưa huấn luyện (do script tự tạo) bằng dấu vết huấn luyện trong file."""
+    if torch is None:
+        return True, "không kiểm tra được (thiếu PyTorch)"
+    payload = torch.load(path, map_location="cpu", weights_only=False)
+    if not isinstance(payload, dict):
+        return False, "định dạng không hợp lệ"
+    metrics = payload.get("metrics") or {}
+    if name == "Stage 7 AlphaZero":
+        # train() luôn ghi policy_loss và value_loss; file tự tạo chỉ có {"loss": ...}
+        ok = "policy_loss" in metrics and "value_loss" in metrics
+        return ok, ("có policy_loss/value_loss" if ok else "metrics không có policy_loss/value_loss (file tự tạo)")
+    traces = {"epoch", "metrics", "training_config", "optimizer_state_dict", "checkpoint_type", "best_val_loss"}
+    found = sorted(traces & set(payload.keys()))
+    return bool(found), (f"có dấu vết huấn luyện: {', '.join(found)}" if found else "không có dấu vết huấn luyện (mạng khởi tạo ngẫu nhiên)")
+
+
 def verify_checkpoints(allow_untrained: bool = False, seed: int = 42) -> Dict[str, str]:
+    """Kiểm tra checkpoint tồn tại VÀ đã được huấn luyện. Không tạo file nào.
+
+    Thiếu file hoặc file chưa huấn luyện: dừng chương trình, trừ khi có --allow-untrained
+    (khi đó agent tự dùng mạng khởi tạo ngẫu nhiên và kết quả được gán nhãn rõ).
     """
-    Kiểm tra sự tồn tại và tính toàn vẹn của các file checkpoint mô hình.
-    Minh bạch mã SHA256 cho báo cáo nghiệm thu.
-    """
-    ckpt_targets = {
+    targets = {
         "Stage 6 Policy": Path("checkpoints/stage6/policy.pt"),
         "Stage 6 Value": Path("checkpoints/stage6/value.pt"),
         "Stage 7 AlphaZero": Path("checkpoints/stage7/best.pt"),
     }
-
     hashes: Dict[str, str] = {}
-    missing: List[Tuple[str, Path]] = []
+    problems: List[str] = []
 
     print("=" * 75)
-    print("  KIỂM TRA CHECKPOINT MÔ HÌNH (AUDIT REPORT):")
-    for name, path in ckpt_targets.items():
-        if path.is_file():
-            sha = compute_sha256(path)
+    print("  KIỂM TRA CHECKPOINT MÔ HÌNH:")
+    for name, path in targets.items():
+        if not path.is_file():
+            hashes[name] = "THIẾU (dùng mạng ngẫu nhiên)"
+            problems.append(f"{name}: thiếu file {path}")
+            print(f"  - {name:<18s}: {path} [THIẾU]")
+            continue
+        sha = compute_sha256(path)
+        trained, why = _is_trained(name, path)
+        print(f"  - {name:<18s}: {path} | SHA256 {sha[:16]}... | {why}")
+        if trained:
             hashes[name] = sha
-            print(f"  • {name:<18s}: {str(path):<32s} (SHA256: {sha})")
         else:
-            hashes[name] = "THIẾU"
-            missing.append((name, path))
-            print(f"  • {name:<18s}: {str(path):<32s} [THIẾU]")
+            hashes[name] = f"{sha} (CHƯA HUẤN LUYỆN)"
+            problems.append(f"{name}: {path} chưa huấn luyện ({why})")
     print("=" * 75)
 
-    if missing:
+    if problems:
         if not allow_untrained:
-            err_details = "\n".join(f"    - {name}: {path}" for name, path in missing)
-            raise FileNotFoundError(
-                f"\n[LỖI] Thiếu {len(missing)} checkpoint cần thiết cho benchmark:\n"
-                f"{err_details}\n\n"
-                f"Vui lòng chuẩn bị checkpoint hợp lệ theo hướng dẫn (checkpoints/HUONG_DAN_SUA_LAI.md).\n"
-                f"Nếu muốn chạy thử nghiệm với mạng chưa huấn luyện (untrained baseline), hãy thêm cờ: --allow-untrained"
+            raise SystemExit(
+                "\n[LỖI] Checkpoint không hợp lệ cho benchmark:\n  - " + "\n  - ".join(problems)
+                + "\nĐặt checkpoint đã huấn luyện vào đúng đường dẫn (xóa file tự tạo trước), "
+                  "hoặc thêm --allow-untrained nếu cố ý dùng mạng chưa huấn luyện."
             )
-        else:
-            print("  ⚠️  CẢNH BÁO: Đang chạy với cờ --allow-untrained.")
-            print("      Các checkpoint còn thiếu sẽ được khởi tạo tạm thời với trọng số ngẫu nhiên.")
-            if torch is not None:
-                for name, path in missing:
-                    path.parent.mkdir(parents=True, exist_ok=True)
-                    if "policy" in str(path):
-                        from models.cnn_policy import CNNPolicyNetwork
-                        from games.chess.encoder import NUM_ACTIONS
-                        p_model = CNNPolicyNetwork()
-                        torch.save({
-                            "format_version": 1,
-                            "stage": 4,
-                            "model_class": "CNNPolicyNetwork",
-                            "model_config": p_model.get_config(),
-                            "encoder_version": "hwc14-white-v1",
-                            "action_version": "az73-rankflip-v1",
-                            "num_actions": NUM_ACTIONS,
-                            "seed": seed,
-                            "state_dict": p_model.state_dict(),
-                        }, path)
-                    elif "value" in str(path):
-                        from models.value_net import ValueNetwork
-                        v_model = ValueNetwork()
-                        torch.save({
-                            "format_version": 1,
-                            "stage": 5,
-                            "model_class": "ValueNetwork",
-                            "model_config": v_model.get_config(),
-                            "encoder_version": "hwc14-white-v1",
-                            "value_perspective": "side_to_move",
-                            "seed": seed + 1,
-                            "state_dict": v_model.state_dict(),
-                        }, path)
-                    elif "best" in str(path):
-                        from models.dual_head_resnet import DualHeadResNet
-                        from training.stage7_train_alphazero import save_checkpoint, AlphaZeroTrainConfig
-                        m = DualHeadResNet()
-                        cfg = AlphaZeroTrainConfig(seed=seed)
-                        save_checkpoint(m, cfg, step=1, metrics={"loss": 0.5})
-                    hashes[name] = compute_sha256(path)
-
+        print("  CẢNH BÁO: --allow-untrained, các mạng sau là mạng chưa huấn luyện:")
+        for p in problems:
+            print("   *", p)
     return hashes
 
 
