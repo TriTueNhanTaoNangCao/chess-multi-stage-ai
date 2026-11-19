@@ -14,4 +14,5 @@ checkpoints/*.pth
 # Local report drafts and extraction
 docs/*.docx
 docs/extracted_report_text.txt
+*.log
 

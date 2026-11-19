@@ -37,8 +37,17 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-# Đảm bảo stdout flush ngay lập tức trên Windows PowerShell
-sys.stdout.reconfigure(line_buffering=True)
+# Đảm bảo stdout/stderr luôn dùng UTF-8 với fallback an toàn kể cả khi pipe qua Tee-Object trên Windows
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
+    except Exception:
+        pass
 
 try:
     import torch
