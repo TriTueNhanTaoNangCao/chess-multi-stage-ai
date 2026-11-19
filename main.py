@@ -21,7 +21,7 @@ def run_cli(args):
     just_fix_windows_console()
     board = ChessBoard(args.fen)
     ascii_only = args.ascii or needs_ascii(sys.stdout)
-    if args.watch:
+    if getattr(args, "watch", False):
         white_bot = build_agent(args.agent, args.depth, args.seed, checkpoint=getattr(args, "checkpoint", None))
         black_bot = build_agent(args.opponent, args.depth, args.seed + 1)
         try:

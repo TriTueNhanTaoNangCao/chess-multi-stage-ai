@@ -100,3 +100,12 @@ def test_agent_reset():
     # Ensure next act works seamlessly after reset
     move2 = agent.act(b)
     assert move2 in b.get_legal_actions()
+
+
+@pytest.mark.parametrize("wrapped", [True, False])
+def test_agent_rejects_incomplete_checkpoint(tmp_path, wrapped):
+    path = tmp_path / "incomplete.pt"
+    payload = {"state_dict": {}, "model_config": {"num_res_blocks": 1, "hidden_dim": 8}} if wrapped else {}
+    torch.save(payload, path)
+    with pytest.raises(RuntimeError, match="Missing key"):
+        AlphaZeroAgent(checkpoint=path, simulations=1)
