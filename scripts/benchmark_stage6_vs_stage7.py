@@ -154,7 +154,13 @@ def _is_trained(name: str, path: Path) -> tuple[bool, str]:
     if name == "Stage 7 AlphaZero":
         # train() luôn ghi policy_loss và value_loss; file tự tạo chỉ có {"loss": ...}
         ok = "policy_loss" in metrics and "value_loss" in metrics
-        return ok, ("có policy_loss/value_loss" if ok else "metrics không có policy_loss/value_loss (file tự tạo)")
+        if not ok:
+            return False, "metrics không có policy_loss/value_loss (file tự tạo)"
+        tc = payload.get("training_config") or {}
+        games = tc.get("num_iterations", 0) * tc.get("games_per_iteration", 0)
+        if games < 100:
+            return False, f"chỉ {games} ván tự chơi (quy mô kiểm thử)"
+        return True, f"có policy_loss/value_loss ({games} ván tự chơi)"
     traces = {"epoch", "metrics", "training_config", "optimizer_state_dict", "checkpoint_type", "best_val_loss"}
     found = sorted(traces & set(payload.keys()))
     return bool(found), (f"có dấu vết huấn luyện: {', '.join(found)}" if found else "không có dấu vết huấn luyện (mạng khởi tạo ngẫu nhiên)")
