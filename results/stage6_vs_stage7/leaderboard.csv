@@ -1,3 +1,0 @@
-agent,elo,games,wins,draws,losses,win_rate,draw_rate,score_rate,ms_per_move
-AlphaGo (30 sims),1201.8681811999345,200,16,166,18,0.08,0.83,0.495,392.54821739302156
-AlphaZero (30 sims),1198.1318188000655,200,18,166,16,0.09,0.83,0.505,306.5374183772395
