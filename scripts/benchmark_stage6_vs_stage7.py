@@ -598,7 +598,7 @@ def main():
     parser.add_argument("--device", type=str, default="cpu", help="Thiết bị tính toán: cpu hoặc cuda (mặc định: cpu)")
     parser.add_argument("--az-noise", action="store_true", help="Bật Dirichlet exploration noise cho AlphaZero (mặc định: Tắt)")
     parser.add_argument("--allow-untrained", action="store_true", help="Cho phép chạy với mạng khởi tạo ngẫu nhiên nếu thiếu checkpoint")
-    parser.add_argument("--output-dir", default="results/stage6_vs_stage7_30sims", help="Thư mục xuất file kết quả")
+    parser.add_argument("--output-dir", default="results/stage6_vs_stage7", help="Thư mục xuất file kết quả")
     parser.add_argument("--seed", type=int, default=42, help="Seed ngẫu nhiên (mặc định: 42)")
 
     args = parser.parse_args()
