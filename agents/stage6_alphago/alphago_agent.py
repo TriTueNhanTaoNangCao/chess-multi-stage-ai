@@ -62,7 +62,7 @@ class AlphaGoAgent(BaseAgent):
         super().__init__(name=name, player_id=player_id)
 
         self.device = torch.device(device) if torch is not None else None
-        self.simulations = simulations
+        self._simulations = simulations
         self.c_puct = c_puct
         self.rollout_weight = rollout_weight
         self.max_rollout_depth = max_rollout_depth
@@ -103,6 +103,16 @@ class AlphaGoAgent(BaseAgent):
             max_rollout_depth=self.max_rollout_depth,
             seed=self.seed,
         )
+
+    @property
+    def simulations(self) -> int:
+        return self._simulations
+
+    @simulations.setter
+    def simulations(self, value: int) -> None:
+        self._simulations = int(value)
+        if hasattr(self, "mcts") and self.mcts is not None:
+            self.mcts.simulations = int(value)
 
     def _load_policy_model(self, path: Union[str, Path]) -> Optional[Any]:
         """Nạp Policy Network từ file checkpoint theo hợp đồng HANDOFF.md."""

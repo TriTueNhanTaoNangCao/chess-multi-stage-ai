@@ -1,17 +1,20 @@
 """
-Đối đầu Trực tiếp Stage 6 (AlphaGo MCTS) vs Stage 7 (AlphaZero PUCT) - 200 Ván Chuẩn FIDE.
+Đối đầu Trực tiếp Stage 6 (AlphaGo MCTS) vs Stage 7 (AlphaZero PUCT).
 Tác giả: Phan Thanh Tùng (Tùng).
 Hợp tác đồ án: chess-multi-stage-ai (SGU).
 
-Tối ưu hóa:
-- Kho Khai Cuộc Đa Dạng (TCEC Opening Book): 50 thế trận khai cuộc kinh điển.
+Tối ưu hóa & Chuẩn hóa Đánh giá:
+- Kho Khai Cuộc: 50 thế trận khai cuộc chọn lọc chuẩn cờ vua.
 - Ghép cặp đối xứng (Color-Balanced Opening Match): Mỗi thế trận khai cuộc được
   đấu đúng 2 ván đổi màu quân (Ván A: AlphaGo Trắng, Ván B: AlphaZero Trắng).
-- Đa dạng hóa Seed & Dirichlet Noise theo từng ván: Triệt tiêu hoàn toàn tính tất định,
-  đảm bảo 200 ván là 200 thế cờ chiến thuật hoàn toàn khác biệt.
-- Luật kết thúc: Chuẩn FIDE (Chiếu hết, Luật 200 nước, Lặp 3 lần, Không đủ quân, Stalemate).
-- Xuất đầy đủ 4 định dạng chuẩn nhóm (Format giống Thắng):
-  + leaderboard.md
+- Đồng bộ chính xác số mô phỏng MCTS (agent.mcts.simulations == simulations).
+- Tắt nhiễu Dirichlet không đối xứng (chỉ kích hoạt khi có cờ --az-noise).
+- Hỗ trợ cờ --device, --az-noise, --allow-untrained.
+- Kiểm tra tính toàn vẹn và ghi nhận mã SHA256 của toàn bộ các checkpoint mô hình.
+- Tính toán khoảng tin cậy Wilson 95% (Wilson score interval) cho kết quả điểm số.
+- Luật kết thúc: Chiếu hết, Stalemate, Lặp 3 lần, Không đủ quân, Giới hạn nước đi (max_plies_adjudication).
+- Xuất đầy đủ 4 định dạng chuẩn nhóm:
+  + leaderboard.md (kèm Wilson 95% CI và SHA256 checkpoint)
   + leaderboard.csv
   + tournament_results.json (kèm ma trận đối đầu Trắng/Đen)
   + history.sqlite3
@@ -19,13 +22,15 @@ Tối ưu hóa:
 from __future__ import annotations
 import argparse
 import csv
+import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import random
 import sys
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Đảm bảo Project Root nằm trong sys.path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -47,7 +52,7 @@ from arena.tournament import update_elo
 from games.chess.board import ChessBoard
 from services.history import HistoryStore, new_record_id, utc_now
 
-# Kho 50 thế khai cuộc kinh điển chuẩn FIDE (2-4 nước đi)
+# Kho 50 thế khai cuộc kinh điển chuẩn (2-4 nước đi)
 OPENING_BOOK = [
     ["e2e4", "e7e5"],                              # 1. Open Game
     ["e2e4", "c7c5"],                              # 2. Sicilian Defense
@@ -102,8 +107,33 @@ OPENING_BOOK = [
 ]
 
 
+def compute_sha256(path: Union[str, Path]) -> str:
+    """Tính mã băm SHA256 của file."""
+    p = Path(path)
+    if not p.is_file():
+        return "THIẾU (Không tìm thấy file)"
+    h = hashlib.sha256()
+    with p.open("rb") as f:
+        while chunk := f.read(65536):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def compute_wilson_ci(successes: float, total: int, z: float = 1.95996) -> Tuple[float, float]:
+    """Tính khoảng tin cậy Wilson 95% cho tỷ lệ điểm số hoặc tỷ lệ thắng."""
+    if total <= 0:
+        return (0.0, 0.0)
+    p = successes / total
+    denom = 1.0 + (z * z) / total
+    center = p + (z * z) / (2.0 * total)
+    spread = z * math.sqrt((p * (1.0 - p) + (z * z) / (4.0 * total)) / total)
+    lower = max(0.0, (center - spread) / denom)
+    upper = min(1.0, (center + spread) / denom)
+    return (lower, upper)
+
+
 def create_opening_board(pair_index: int) -> ChessBoard:
-    """Tạo bàn cờ xuất phát từ kho khai cuộc chuẩn FIDE theo cặp ván đấu."""
+    """Tạo bàn cờ xuất phát từ kho khai cuộc chọn lọc theo cặp ván đấu."""
     board = ChessBoard()
     moves_uci = OPENING_BOOK[pair_index % len(OPENING_BOOK)]
     for uci in moves_uci:
@@ -113,60 +143,85 @@ def create_opening_board(pair_index: int) -> ChessBoard:
     return board
 
 
-def ensure_checkpoints(seed: int = 42) -> None:
-    """Tự động kiểm tra và tạo checkpoint hợp lệ cho Stage 6 và 7 nếu chưa có."""
-    if torch is None:
-        return
+def verify_checkpoints(allow_untrained: bool = False, seed: int = 42) -> Dict[str, str]:
+    """
+    Kiểm tra sự tồn tại và tính toàn vẹn của các file checkpoint mô hình.
+    Minh bạch mã SHA256 cho báo cáo nghiệm thu.
+    """
+    ckpt_targets = {
+        "Stage 6 Policy": Path("checkpoints/stage6/policy.pt"),
+        "Stage 6 Value": Path("checkpoints/stage6/value.pt"),
+        "Stage 7 AlphaZero": Path("checkpoints/stage7/best.pt"),
+    }
 
-    # 1. Stage 6 Checkpoints (Policy + Value)
-    st6_dir = Path("checkpoints/stage6")
-    st6_dir.mkdir(parents=True, exist_ok=True)
-    p_path = st6_dir / "policy.pt"
-    v_path = st6_dir / "value.pt"
+    hashes: Dict[str, str] = {}
+    missing: List[Tuple[str, Path]] = []
 
-    if not p_path.is_file() or not v_path.is_file():
-        from models.cnn_policy import CNNPolicyNetwork
-        from models.value_net import ValueNetwork
-        from games.chess.encoder import NUM_ACTIONS
+    print("=" * 75)
+    print("  KIỂM TRA CHECKPOINT MÔ HÌNH (AUDIT REPORT):")
+    for name, path in ckpt_targets.items():
+        if path.is_file():
+            sha = compute_sha256(path)
+            hashes[name] = sha
+            print(f"  • {name:<18s}: {str(path):<32s} (SHA256: {sha})")
+        else:
+            hashes[name] = "THIẾU"
+            missing.append((name, path))
+            print(f"  • {name:<18s}: {str(path):<32s} [THIẾU]")
+    print("=" * 75)
 
-        if not p_path.is_file():
-            p_model = CNNPolicyNetwork()
-            torch.save({
-                "format_version": 1,
-                "stage": 4,
-                "model_class": "CNNPolicyNetwork",
-                "model_config": p_model.get_config(),
-                "encoder_version": "hwc14-white-v1",
-                "action_version": "az73-rankflip-v1",
-                "num_actions": NUM_ACTIONS,
-                "seed": seed,
-                "state_dict": p_model.state_dict(),
-            }, p_path)
+    if missing:
+        if not allow_untrained:
+            err_details = "\n".join(f"    - {name}: {path}" for name, path in missing)
+            raise FileNotFoundError(
+                f"\n[LỖI] Thiếu {len(missing)} checkpoint cần thiết cho benchmark:\n"
+                f"{err_details}\n\n"
+                f"Vui lòng chuẩn bị checkpoint hợp lệ theo hướng dẫn (checkpoints/HUONG_DAN_SUA_LAI.md).\n"
+                f"Nếu muốn chạy thử nghiệm với mạng chưa huấn luyện (untrained baseline), hãy thêm cờ: --allow-untrained"
+            )
+        else:
+            print("  ⚠️  CẢNH BÁO: Đang chạy với cờ --allow-untrained.")
+            print("      Các checkpoint còn thiếu sẽ được khởi tạo tạm thời với trọng số ngẫu nhiên.")
+            if torch is not None:
+                for name, path in missing:
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    if "policy" in str(path):
+                        from models.cnn_policy import CNNPolicyNetwork
+                        from games.chess.encoder import NUM_ACTIONS
+                        p_model = CNNPolicyNetwork()
+                        torch.save({
+                            "format_version": 1,
+                            "stage": 4,
+                            "model_class": "CNNPolicyNetwork",
+                            "model_config": p_model.get_config(),
+                            "encoder_version": "hwc14-white-v1",
+                            "action_version": "az73-rankflip-v1",
+                            "num_actions": NUM_ACTIONS,
+                            "seed": seed,
+                            "state_dict": p_model.state_dict(),
+                        }, path)
+                    elif "value" in str(path):
+                        from models.value_net import ValueNetwork
+                        v_model = ValueNetwork()
+                        torch.save({
+                            "format_version": 1,
+                            "stage": 5,
+                            "model_class": "ValueNetwork",
+                            "model_config": v_model.get_config(),
+                            "encoder_version": "hwc14-white-v1",
+                            "value_perspective": "side_to_move",
+                            "seed": seed + 1,
+                            "state_dict": v_model.state_dict(),
+                        }, path)
+                    elif "best" in str(path):
+                        from models.dual_head_resnet import DualHeadResNet
+                        from training.stage7_train_alphazero import save_checkpoint, AlphaZeroTrainConfig
+                        m = DualHeadResNet()
+                        cfg = AlphaZeroTrainConfig(seed=seed)
+                        save_checkpoint(m, cfg, step=1, metrics={"loss": 0.5})
+                    hashes[name] = compute_sha256(path)
 
-        if not v_path.is_file():
-            v_model = ValueNetwork()
-            torch.save({
-                "format_version": 1,
-                "stage": 5,
-                "model_class": "ValueNetwork",
-                "model_config": v_model.get_config(),
-                "encoder_version": "hwc14-white-v1",
-                "value_perspective": "side_to_move",
-                "seed": seed + 1,
-                "state_dict": v_model.state_dict(),
-            }, v_path)
-
-    # 2. Stage 7 Checkpoint (DualHeadResNet)
-    st7_dir = Path("checkpoints/stage7")
-    st7_dir.mkdir(parents=True, exist_ok=True)
-    st7_path = st7_dir / "best.pt"
-    if not st7_path.is_file():
-        from models.dual_head_resnet import DualHeadResNet
-        from training.stage7_train_alphazero import save_checkpoint, AlphaZeroTrainConfig
-
-        m = DualHeadResNet()
-        cfg = AlphaZeroTrainConfig(seed=seed)
-        save_checkpoint(m, cfg, step=1, metrics={"loss": 0.45})
+    return hashes
 
 
 def save_benchmark_artifacts(
@@ -175,22 +230,27 @@ def save_benchmark_artifacts(
     matchup_matrix: Dict[str, Any],
     reason_counts: Dict[str, int],
     records: List[Dict[str, Any]],
+    checkpoint_hashes: Dict[str, str],
     total_time: float,
     games: int,
     max_plies: int,
     seed: int,
     simulations: int,
     threads: int,
+    device: str,
+    az_noise: bool,
     name_st6: str,
     name_st7: str,
-) -> tuple[Dict[str, Any], List[Dict[str, Any]]]:
-    """Xuất đầy đủ 3 file báo cáo (md, csv, json) chuẩn format giống Thắng."""
+) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
+    """Xuất đầy đủ 4 file báo cáo chuẩn: md, csv, json, sqlite3."""
     rows = []
     for row in stats.values():
         total_g = row["games"]
         win_r = row["wins"] / total_g if total_g else 0.0
         draw_r = row["draws"] / total_g if total_g else 0.0
-        score_r = (row["wins"] + row["draws"] / 2.0) / total_g if total_g else 0.0
+        score_val = row["wins"] + row["draws"] / 2.0
+        score_r = score_val / total_g if total_g else 0.0
+        ci_low, ci_high = compute_wilson_ci(score_val, total_g, z=1.95996)
         ms_move = (row["seconds"] * 1000.0 / row["calls"]) if row["calls"] else 0.0
         rows.append({
             "agent": row["agent"],
@@ -199,9 +259,13 @@ def save_benchmark_artifacts(
             "wins": row["wins"],
             "draws": row["draws"],
             "losses": row["losses"],
+            "score": score_val,
+            "score_rate": score_r,
+            "ci_95_low": ci_low,
+            "ci_95_high": ci_high,
+            "score_ci_95": f"[{ci_low:.3f}, {ci_high:.3f}]",
             "win_rate": win_r,
             "draw_rate": draw_r,
-            "score_rate": score_r,
             "ms_per_move": ms_move,
         })
     rows.sort(key=lambda r: (-r["elo"], r["agent"]))
@@ -215,17 +279,24 @@ def save_benchmark_artifacts(
     # 2. leaderboard.md
     completed_games = len(records)
     md_lines = [
-        "# Local Elo leaderboard",
+        "# Local Elo Leaderboard: Stage 6 (AlphaGo) vs Stage 7 (AlphaZero)",
         "",
-        f"Games/pair: {completed_games}; max plies: {max_plies}; initial Elo: 1200; logistic K: 32.",
-        "Ply-limit draws are adjudications. These are local estimates, not FIDE ratings.",
+        f"- Tổng số ván hoàn thành: {completed_games}/{games}",
+        f"- Giới hạn nước đi mỗi ván: {max_plies} plies (Vượt giới hạn xử hòa: max_plies_adjudication)",
+        f"- Số mô phỏng MCTS: {simulations} sims/nước",
+        f"- Thiết bị tính toán: {device} | Luồng CPU: {threads if threads > 0 else 'Full'}",
+        f"- Nhiễu Dirichlet AlphaZero: {'Bật (--az-noise)' if az_noise else 'Tắt (Đối xứng điều kiện)'}",
+        f"- Elo khởi điểm: 1200.0 | K-factor: 32",
         "",
-        "| Agent | Elo | W / D / L | Win % | Draw % | ms/move |",
-        "| :--- | ---: | :---: | ---: | ---: | ---: |",
+        "### Bảng Xếp Hạng Hiệu Năng",
+        "",
+        "| Agent | Elo | W / D / L | Score | Score % (Wilson 95% CI) | Win % | Draw % | ms/move |",
+        "| :--- | ---: | :---: | ---: | :---: | ---: | ---: | ---: |",
     ]
     for r in rows:
         md_lines.append(
             f'| {r["agent"]} | {r["elo"]:.1f} | {r["wins"]} / {r["draws"]} / {r["losses"]} | '
+            f'{r["score"]:.1f} | {r["score_rate"]:.1%} [{r["ci_95_low"]:.3f}, {r["ci_95_high"]:.3f}] | '
             f'{r["win_rate"]:.1%} | {r["draw_rate"]:.1%} | {r["ms_per_move"]:.2f} |'
         )
 
@@ -242,6 +313,16 @@ def save_benchmark_artifacts(
             f'| {data["name"]} | {data["games"]} | {data["wins"]} | {data["draws"]} | {data["losses"]} | {wr:.1%} |'
         )
 
+    md_lines.extend([
+        "",
+        "## Danh mục Checkpoint sử dụng (Audit SHA256)",
+        "",
+        "| Thành phần | Đường dẫn | SHA256 |",
+        "| :--- | :--- | :--- |",
+    ])
+    for c_name, c_hash in checkpoint_hashes.items():
+        md_lines.append(f"| {c_name} | `checkpoints/...` | `{c_hash}` |")
+
     (out_path / "leaderboard.md").write_text("\n".join(md_lines) + "\n", encoding="utf-8")
 
     # 3. tournament_results.json
@@ -256,8 +337,11 @@ def save_benchmark_artifacts(
             "seed": seed,
             "simulations": simulations,
             "threads": threads,
+            "device": device,
+            "az_noise": az_noise,
             "opening_book_size": len(OPENING_BOOK),
-            "rules": "Chuẩn FIDE (Chiếu hết, Luật 200 nước, Lặp 3 lần, Không đủ quân, Stalemate)",
+            "rules": "Chiếu hết, Stalemate, Lặp 3 lần, Không đủ quân, Giới hạn nước đi (max_plies_adjudication)",
+            "checkpoints": checkpoint_hashes,
             "agents": [
                 {"key": "alphago", "name": name_st6},
                 {"key": "alphazero", "name": name_st7},
@@ -279,33 +363,38 @@ def save_benchmark_artifacts(
 def run_benchmark(
     games: int = 200,
     max_plies: int = 200,
-    simulations: int = 15,
-    threads: int = 0,
-    output_dir: str = "results/stage6_vs_stage7",
+    simulations: int = 30,
+    threads: int = 2,
+    device: str = "cpu",
+    az_noise: bool = False,
+    allow_untrained: bool = False,
+    output_dir: str = "results/stage6_vs_stage7_30sims",
     seed: int = 42,
 ) -> Dict[str, Any]:
-    """Chạy toàn bộ 200 ván đấu đối kháng trực tiếp và xuất kết quả."""
+    """Chạy toàn bộ benchmark đối kháng trực tiếp và xuất kết quả."""
     actual_threads = threads if threads > 0 else (os.cpu_count() or 4)
     if torch is not None:
         torch.set_num_threads(actual_threads)
 
-    ensure_checkpoints(seed)
+    # 1. Kiểm tra tính toàn vẹn của checkpoint
+    checkpoint_hashes = verify_checkpoints(allow_untrained=allow_untrained, seed=seed)
 
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
     history = HistoryStore(out_path / "history.sqlite3")
     run_id = new_record_id()
 
-    # In banner thông tin và câu luật bắt buộc
+    # 2. In thông số cấu hình ván đấu
     print("=" * 75)
     print("  ĐỐI ĐẦU ĐỒNG HẠNG: STAGE 6 (AlphaGo) vs STAGE 7 (AlphaZero)")
     print(f"  Tổng số ván: {games} ({games // 2} ván Trắng / {games // 2} ván Đen)")
-    print(f"  Kho khai cuộc: {len(OPENING_BOOK)} thế cờ FIDE (Đối xứng màu quân theo cặp)")
+    print(f"  Kho khai cuộc: {len(OPENING_BOOK)} thế cờ chọn lọc (Đối xứng màu quân theo cặp)")
     print(f"  Số lượt mô phỏng MCTS: {simulations} sims/nước")
-    print(f"  Tài nguyên tính toán: {actual_threads} threads CPU ({'Full CPU tối đa' if threads <= 0 else f'Giới hạn {threads} threads'})")
+    print(f"  Tài nguyên tính toán: {device} | {actual_threads} luồng CPU")
+    print(f"  Dirichlet Noise (AlphaZero): {'BẬT (--az-noise)' if az_noise else 'TẮT (Đối xứng điều kiện)'}")
     print(f"  Thư mục xuất báo cáo: {out_path.resolve()}")
     print("=" * 75)
-    print("Luật kết thúc: Chuẩn FIDE (Chiếu hết, Luật 200 nước, Lặp 3 lần, Không đủ quân, Stalemate)")
+    print("Luật kết thúc: Chiếu hết, Stalemate, Lặp 3 lần, Không đủ quân, Giới hạn nước đi (max_plies_adjudication)")
     print("-" * 75)
 
     name_st6 = f"AlphaGo ({simulations} sims)"
@@ -330,23 +419,35 @@ def run_benchmark(
         game_num = i + 1
         pair_idx = i // 2  # Cứ 2 ván liên tiếp (Trắng & Đen) dùng chung 1 thế khai cuộc
 
-        # Khởi tạo bàn cờ với thế khai cuộc chuẩn FIDE
+        # Khởi tạo bàn cờ với thế khai cuộc
         opening_board = create_opening_board(pair_idx)
         initial_moves_desc = " ".join(m.uci() for m in opening_board.board.move_stack)
 
         # Khởi tạo Agent với seed độc lập cho từng ván để triệt tiêu tính tất định
-        agent_stage6 = build_agent("alphago", depth=1, seed=seed + i * 37)
-        agent_stage7 = build_agent("alphazero", depth=1, seed=seed + i * 37 + 13)
+        agent_stage6 = build_agent("alphago", depth=1, seed=seed + i * 37, device=device)
+        agent_stage7 = build_agent("alphazero", depth=1, seed=seed + i * 37 + 13, device=device)
 
-        if hasattr(agent_stage6, "simulations"):
-            agent_stage6.simulations = simulations
-            agent_stage6.name = name_st6
-        if hasattr(agent_stage7, "simulations"):
-            agent_stage7.simulations = simulations
-            agent_stage7.name = name_st7
-            # Kích hoạt Dirichlet exploration noise cho AlphaZero để mở rộng chiến thuật
-            if hasattr(agent_stage7, "add_noise"):
-                agent_stage7.add_noise = True
+        # Đồng bộ chính xác số mô phỏng cho cả Agent và MCTS Engine
+        agent_stage6.simulations = simulations
+        agent_stage6.mcts.simulations = simulations
+        agent_stage6.name = name_st6
+
+        agent_stage7.simulations = simulations
+        agent_stage7.mcts.simulations = simulations
+        agent_stage7.name = name_st7
+
+        # Tắt nhiễu bất đối xứng
+        agent_stage7.add_noise = az_noise
+
+        # Kiểm tra xác thực số mô phỏng thực tế
+        if agent_stage6.mcts.simulations != simulations:
+            raise ValueError(
+                f"Số mô phỏng thực tế của AlphaGo ({agent_stage6.mcts.simulations}) khác ngân sách khai báo ({simulations})"
+            )
+        if agent_stage7.mcts.simulations != simulations:
+            raise ValueError(
+                f"Số mô phỏng thực tế của AlphaZero ({agent_stage7.mcts.simulations}) khác ngân sách khai báo ({simulations})"
+            )
 
         # Chẵn: AlphaGo cầm Trắng; Lẻ: AlphaZero cầm Trắng (Cân bằng tuyệt đối 50/50)
         if i % 2 == 0:
@@ -411,7 +512,7 @@ def run_benchmark(
             f"[KC: {initial_moves_desc}]"
         )
 
-        # Cập nhật tóm tắt định kỳ mỗi 5 ván và tự động lưu file kết quả
+        # Cập nhật tóm tắt định kỳ mỗi 5 ván và tự động đồng bộ kết quả
         if game_num % 5 == 0 or game_num == games:
             st6_w = stats[name_st6]["wins"]
             st7_w = stats[name_st7]["wins"]
@@ -423,19 +524,21 @@ def run_benchmark(
                 f"[Đã chạy: {cur_elapsed/60:.1f} phút]"
             )
             print("-" * 75)
-            # Tự động đồng bộ báo cáo md, csv, json để có thể theo dõi bất cứ lúc nào
             save_benchmark_artifacts(
                 out_path=out_path,
                 stats=stats,
                 matchup_matrix=matchup_matrix,
                 reason_counts=reason_counts,
                 records=records,
+                checkpoint_hashes=checkpoint_hashes,
                 total_time=cur_elapsed,
                 games=games,
                 max_plies=max_plies,
                 seed=seed,
                 simulations=simulations,
                 threads=threads,
+                device=device,
+                az_noise=az_noise,
                 name_st6=name_st6,
                 name_st7=name_st7,
             )
@@ -447,23 +550,29 @@ def run_benchmark(
         matchup_matrix=matchup_matrix,
         reason_counts=reason_counts,
         records=records,
+        checkpoint_hashes=checkpoint_hashes,
         total_time=total_time,
         games=games,
         max_plies=max_plies,
         seed=seed,
         simulations=simulations,
         threads=threads,
+        device=device,
+        az_noise=az_noise,
         name_st6=name_st6,
         name_st7=name_st7,
     )
 
     # In kết quả hoàn thành ra màn hình
     print("\n" + "=" * 75)
-    print(f"🎉 HOÀN THÀNH TOÀN BỘ {games} VÁN ĐẤU TRONG {total_time:.1f} GIÂY!")
+    print(f"🎉 HOÀN THÀNH TOÀN BỘ {games} VÁN ĐẤU TRONG {total_time:.1f} GIÂY ({total_time/60:.1f} PHÚT)!")
     print("=" * 75)
-    print("BẢNG XẾP HẠNG CUỐI CÙNG:")
+    print("BẢNG XẾP HẠNG CUỐI CÙNG (KÈM KHOẢNG TIN CẬY WILSON 95%):")
     for r in rows:
-        print(f"  • {r['agent']:24s} | Elo: {r['elo']:6.1f} | Thắng: {r['wins']:3d} | Hòa: {r['draws']:3d} | Thua: {r['losses']:3d} | Win: {r['win_rate']:5.1%}")
+        print(
+            f"  • {r['agent']:24s} | Elo: {r['elo']:6.1f} | Thắng: {r['wins']:3d} | Hòa: {r['draws']:3d} | "
+            f"Thua: {r['losses']:3d} | Score: {r['score_rate']:.1%} {r['score_ci_95']} | Win: {r['win_rate']:5.1%}"
+        )
 
     print("\nMA TRẬN ĐỐI ĐẦU THEO MÀU QUÂN:")
     for tag, data in matchup_matrix.items():
@@ -472,25 +581,28 @@ def run_benchmark(
 
     print("\nPHÂN LOẠI LÝ DO KẾT THÚC:")
     for rk, rv in reason_counts.items():
-        print(f"  • {rk:20s}: {rv:3d} ván ({(rv/games)*100:4.1f}%)")
+        print(f"  • {rk:25s}: {rv:3d} ván ({(rv/games)*100:4.1f}%)")
 
     print(f"\nĐã xuất toàn bộ kết quả vào: {out_path.resolve()}/")
-    print(f"  1. leaderboard.md")
-    print(f"  2. leaderboard.csv")
-    print(f"  3. tournament_results.json")
-    print(f"  4. history.sqlite3")
+    print(f"  1. leaderboard.md (Bảng xếp hạng markdown kèm Wilson 95% CI và SHA256)")
+    print(f"  2. leaderboard.csv (Số liệu bảng xếp hạng CSV)")
+    print(f"  3. tournament_results.json (Dữ liệu JSON chi tiết kèm ván đấu và config)")
+    print(f"  4. history.sqlite3 (Cơ sở dữ liệu SQLite ván cờ)")
     print("=" * 75)
 
     return payload
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Đối đầu trực tiếp 200 ván: Stage 6 (AlphaGo) vs Stage 7 (AlphaZero)")
+    parser = argparse.ArgumentParser(description="Đối đầu trực tiếp: Stage 6 (AlphaGo) vs Stage 7 (AlphaZero)")
     parser.add_argument("--games", type=int, default=200, help="Tổng số ván đấu (mặc định: 200)")
     parser.add_argument("--max-plies", type=int, default=200, help="Giới hạn số nước đi mỗi ván (mặc định: 200)")
-    parser.add_argument("--simulations", type=int, default=15, help="Số lượt mô phỏng MCTS/nước (mặc định: 15)")
-    parser.add_argument("--threads", type=int, default=0, help="Số luồng CPU cho PyTorch (0 = Full toàn bộ CPU, hoặc 2, 4)")
-    parser.add_argument("--output-dir", default="results/stage6_vs_stage7", help="Thư mục xuất file kết quả")
+    parser.add_argument("--simulations", type=int, default=30, help="Số lượt mô phỏng MCTS/nước (mặc định: 30)")
+    parser.add_argument("--threads", type=int, default=2, help="Số luồng CPU cho PyTorch (mặc định: 2)")
+    parser.add_argument("--device", type=str, default="cpu", help="Thiết bị tính toán: cpu hoặc cuda (mặc định: cpu)")
+    parser.add_argument("--az-noise", action="store_true", help="Bật Dirichlet exploration noise cho AlphaZero (mặc định: Tắt)")
+    parser.add_argument("--allow-untrained", action="store_true", help="Cho phép chạy với mạng khởi tạo ngẫu nhiên nếu thiếu checkpoint")
+    parser.add_argument("--output-dir", default="results/stage6_vs_stage7_30sims", help="Thư mục xuất file kết quả")
     parser.add_argument("--seed", type=int, default=42, help="Seed ngẫu nhiên (mặc định: 42)")
 
     args = parser.parse_args()
@@ -499,6 +611,9 @@ def main():
         max_plies=args.max_plies,
         simulations=args.simulations,
         threads=args.threads,
+        device=args.device,
+        az_noise=args.az_noise,
+        allow_untrained=args.allow_untrained,
         output_dir=args.output_dir,
         seed=args.seed,
     )
