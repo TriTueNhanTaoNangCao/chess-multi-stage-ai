@@ -15,12 +15,19 @@ Closed-Loop AlphaZero Pipeline:
 """
 from __future__ import annotations
 import argparse
+import csv
 from dataclasses import asdict, dataclass
 import json
 import math
 from pathlib import Path
 import random
+import sys
+import time
 from typing import Any, Dict, List, Optional, Tuple, Union
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 import chess
 import numpy as np
 
@@ -297,25 +304,79 @@ def train(config_input: Optional[Union[Dict[str, Any], AlphaZeroTrainConfig]] = 
         weight_decay=config.weight_decay,
     )
 
+    ckpt_dir = Path(config.checkpoint_dir)
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
+    log_csv_path = ckpt_dir / "training_log.csv"
+
+    # Khởi tạo file log CSV nếu chưa có hoặc bắt đầu huấn luyện mới
+    file_exists = log_csv_path.is_file()
+    log_file = log_csv_path.open("a", newline="", encoding="utf-8")
+    log_writer = csv.DictWriter(
+        log_file,
+        fieldnames=["iteration", "games", "samples", "total_samples", "loss", "policy_loss", "value_loss", "elapsed_seconds"],
+    )
+    if not file_exists or log_csv_path.stat().st_size == 0:
+        log_writer.writeheader()
+        log_file.flush()
+
     replay_buffer = AlphaZeroReplayBuffer()
     all_metrics: List[Dict[str, float]] = []
 
+    print("=" * 70)
+    print("  BẮT ĐẦU HUẤN LUYỆN ALPHAZERO TỰ CHƠI (STAGE 7)")
+    print(f"  Vòng lặp: {config.num_iterations} iterations | Ván/vòng: {config.games_per_iteration} games")
+    print(f"  MCTS Sims: {config.mcts_simulations} sims | Max Plies: {config.max_plies_per_game} plies")
+    print(f"  Thiết bị: {config.device} | Checkpoint Dir: {ckpt_dir}")
+    print("=" * 70)
+
     for it in range(1, config.num_iterations + 1):
+        t_it_start = time.time()
+
         # 1. Self-Play data generation
         model.eval()
+        samples_before = len(replay_buffer)
         for g in range(config.games_per_iteration):
             samples = play_self_play_game(model, config, seed=config.seed + it * 100 + g)
             replay_buffer.extend(samples)
+        new_samples = len(replay_buffer) - samples_before
 
         # 2. Optimization step
         metrics = train_step(model, optimizer, replay_buffer, config)
+        t_it_elapsed = time.time() - t_it_start
+
         metrics["iteration"] = it
         metrics["buffer_size"] = len(replay_buffer)
+        metrics["elapsed_seconds"] = t_it_elapsed
         all_metrics.append(metrics)
+
+        # 3. Ghi log CSV từng vòng để vẽ learning curve
+        log_writer.writerow({
+            "iteration": it,
+            "games": config.games_per_iteration,
+            "samples": new_samples,
+            "total_samples": len(replay_buffer),
+            "loss": f"{metrics['loss']:.4f}",
+            "policy_loss": f"{metrics['policy_loss']:.4f}",
+            "value_loss": f"{metrics['value_loss']:.4f}",
+            "elapsed_seconds": f"{t_it_elapsed:.1f}",
+        })
+        log_file.flush()
+
+        # 4. Lưu checkpoint mỗi vòng iteration và cập nhật best.pt
+        save_checkpoint(model, config, step=it, metrics=metrics, filename=f"checkpoint_iter_{it}.pt")
+        ckpt_path = save_checkpoint(model, config, step=it, metrics=metrics, filename="best.pt")
+
+        print(
+            f"[{it:3d}/{config.num_iterations}] Loss: {metrics['loss']:.4f} "
+            f"(Pol: {metrics['policy_loss']:.4f}, Val: {metrics['value_loss']:.4f}) | "
+            f"+{new_samples:3d} mẫu (Tổng: {len(replay_buffer):4d}) | {t_it_elapsed:5.1f}s"
+        )
+
+    log_file.close()
 
     # Save final best checkpoint
     last_metrics = all_metrics[-1] if all_metrics else {}
-    ckpt_path = save_checkpoint(model, config, step=config.num_iterations, metrics=last_metrics)
+    ckpt_path = save_checkpoint(model, config, step=config.num_iterations, metrics=last_metrics, filename="best.pt")
 
     return {
         "status": "success",
@@ -323,6 +384,7 @@ def train(config_input: Optional[Union[Dict[str, Any], AlphaZeroTrainConfig]] = 
         "total_samples": len(replay_buffer),
         "iterations": config.num_iterations,
         "final_metrics": last_metrics,
+        "log_csv": str(log_csv_path),
     }
 
 
@@ -335,6 +397,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--checkpoint_dir", type=str, default="checkpoints/stage7", help="Checkpoint directory")
+    parser.add_argument("--device", type=str, default="cpu", help="Compute device (cpu or cuda)")
+    parser.add_argument("--max_plies", type=int, default=80, help="Max plies per self-play game")
     return parser.parse_args()
 
 
@@ -348,6 +412,8 @@ if __name__ == "__main__":
         lr=args.lr,
         seed=args.seed,
         checkpoint_dir=args.checkpoint_dir,
+        device=args.device,
+        max_plies_per_game=args.max_plies,
     )
     result = train(cfg)
     print("Training finished successfully:", result)

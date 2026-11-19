@@ -56,7 +56,7 @@ class AlphaZeroAgent(BaseAgent):
         super().__init__(name="AlphaZero", player_id=player_id)
         self.seed = seed
         self.device = device
-        self.simulations = max(1, int(simulations))
+        self._simulations = max(1, int(simulations))
         self.c_puct = float(c_puct)
         self.dirichlet_alpha = float(dirichlet_alpha)
         self.dirichlet_epsilon = float(dirichlet_epsilon)
@@ -84,6 +84,16 @@ class AlphaZeroAgent(BaseAgent):
             device=self.device,
             seed=self.seed,
         )
+
+    @property
+    def simulations(self) -> int:
+        return self._simulations
+
+    @simulations.setter
+    def simulations(self, value: int) -> None:
+        self._simulations = max(1, int(value))
+        if hasattr(self, "mcts") and self.mcts is not None:
+            self.mcts.simulations = max(1, int(value))
 
     def _load_checkpoint(self, path: Union[str, Path]) -> Optional[Any]:
         """
