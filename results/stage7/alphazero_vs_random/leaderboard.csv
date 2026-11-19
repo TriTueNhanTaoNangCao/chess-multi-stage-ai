@@ -1,3 +1,0 @@
-agent,elo,games,wins,draws,losses,win_rate,draw_rate,score_rate,ms_per_move
-AlphaZero,1200.0,2,0,2,0,0.0,1.0,0.5,717.5442113850547
-Random,1200.0,2,0,2,0,0.0,1.0,0.5,1.1562930686874222

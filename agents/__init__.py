@@ -1,4 +1,5 @@
 """Registry and factory for chess agents."""
+from pathlib import Path
 from .base import BaseAgent
 from .human_agent import HumanAgent
 from .random_agent import RandomAgent
@@ -64,6 +65,16 @@ def build_agent(key, depth=None, seed=None, *, checkpoint=None, device="cpu"):
             kwargs["seed"] = seed
         if checkpoint is not None:
             kwargs["checkpoint"] = checkpoint
+        else:
+            default_p = Path("checkpoints/stage6/policy.pt")
+            default_v = Path("checkpoints/stage6/value.pt")
+            default_best = Path("checkpoints/stage6/best.pt")
+            if default_p.is_file():
+                kwargs["checkpoint_policy"] = str(default_p)
+            if default_v.is_file():
+                kwargs["checkpoint_value"] = str(default_v)
+            elif default_best.is_file():
+                kwargs["checkpoint"] = str(default_best)
         if device is not None:
             kwargs["device"] = device
         if depth is not None:
@@ -75,6 +86,10 @@ def build_agent(key, depth=None, seed=None, *, checkpoint=None, device="cpu"):
             kwargs["seed"] = seed
         if checkpoint is not None:
             kwargs["checkpoint"] = checkpoint
+        else:
+            default_ckpt = Path("checkpoints/stage7/best.pt")
+            if default_ckpt.is_file():
+                kwargs["checkpoint"] = str(default_ckpt)
         if device is not None:
             kwargs["device"] = device
         if depth is not None:
