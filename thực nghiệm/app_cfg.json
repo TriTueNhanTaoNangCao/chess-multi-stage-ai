@@ -1,0 +1,73 @@
+{
+    "input_dir": "/kaggle/input",
+    "output_dir": "/kaggle/working",
+    "pretrained_dir": "/kaggle/input/adler-torch-pretrainedmodels-weights",
+    "exps_dir": "/kaggle/working/exps",
+    "dataset_cfg": {
+        "breast_imgage": {
+            "data_root": "/kaggle/input/adler-breast-cancer-image/image_{size}"
+        },
+        "breast_org": {
+            "data_root": "/kaggle/input/rsna-breast-cancer-detection"
+        }
+    },
+    "models_cfg": {
+        "baseline_densenet121_v0": {
+            "cls": "breast_baselines_v0",
+            "cfg": {
+                "model_name": "densenet121",
+                "output_classes": 2,
+                "num_classes": 1024,
+                "pretrained": true
+            }
+        },
+        "baseline_se_resnext50_32x4d_v0": {
+            "cls": "breast_baselines_v0",
+            "cfg": {
+                "model_name": "se_resnext50_32x4d",
+                "output_classes": 2,
+                "num_classes": 1024,
+                "pretrained": true
+            }
+        },
+        "baseline_se_resnext50_32x4d_v1": {
+            "cls": "breast_baselines_v0",
+            "cfg": {
+                "model_name": "se_resnext50_32x4d",
+                "output_classes": 2,
+                "num_classes": 2048,
+                "pretrained": false
+            }
+        },
+        "baseline_resnet50_v0": {
+            "cls": "breast_baselines_v0",
+            "cfg": {
+                "model_name": "resnet50",
+                "output_classes": 2,
+                "num_classes": 512,
+                "pretrained": false
+            }
+        },
+        "baseline_se_resnext50_32x4d_v2": {
+            "cls": "breast_baselines_v0",
+            "cfg": {
+                "model_name": "se_resnext50_32x4d",
+                "output_classes": 2,
+                "num_classes": 2048,
+                "pretrained": true,
+                "weight": null
+            }
+        }
+    },
+    "data_augs_cfg": {
+        "crop_v0": {
+            "train_aug_cls": "breast_train_aug_crop_v0",
+            "valid_aug_cls": "breast_valid_aug_crop_v0",
+            "cfg": {
+                "scale_size": null,
+                "image_size": 224,
+                "crop_size": 256
+            }
+        }
+    }
+}

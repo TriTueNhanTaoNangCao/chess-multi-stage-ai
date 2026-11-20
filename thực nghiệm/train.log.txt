@@ -1,0 +1,460 @@
+Class Distribution: (array([0, 1]), array([53548,  1158]))
+---------- fold0 ----------
+(array([0, 1]), array([35623,   790]))
+(array([0, 1]), array([17925,   368]))
+
+---------- fold1 ----------
+(array([0, 1]), array([35827,   735]))
+(array([0, 1]), array([17721,   423]))
+
+---------- fold2 ----------
+(array([0, 1]), array([35646,   791]))
+(array([0, 1]), array([17902,   367]))
+
+---------- data_aug ----------
+{'scale_size': None, 'image_size': 224, 'crop_size': 256}
+<function breast_train_aug_crop_v0 at 0x7f188e68de60>
+<function breast_valid_aug_crop_v0 at 0x7f188e68df80>
+---------- train_data ----------
+Len: 71246 [35623, 790]
+
+---------- aug ----------
+
+---------- valid_data ----------
+Len: 35850 [17925, 368]
+
+---------- valid_aug ----------
+
+---------- train_loader ----------
+Compose([
+  GetLargestComponent(always_apply=False, p=1, verbose=False, min_size=400, opening_size=(50, 50)),
+  Resize(always_apply=False, p=1, height=256, width=256, interpolation=1),
+  RandomCrop(always_apply=False, p=1, height=224, width=224),
+  Rotate(always_apply=False, p=0.5, limit=(-5, 5), interpolation=1, border_mode=4, value=None, mask_value=None, rotate_method='largest_box', crop_border=False),
+  HorizontalFlip(always_apply=False, p=0.5),
+  PadIfNeeded(always_apply=False, p=1, min_height=224, min_width=224, pad_height_divisor=None, pad_width_divisor=None, border_mode=0, value=0, mask_value=None),
+  ToTensorV2(always_apply=True, p=1.0, transpose_mask=False),
+], p=1.0, bbox_params=None, keypoint_params=None, additional_targets={})
+
+---------- valid_loader ----------
+Compose([
+  GetLargestComponent(always_apply=False, p=1, verbose=False, min_size=400, opening_size=(50, 50)),
+  Resize(always_apply=False, p=1, height=224, width=224, interpolation=1),
+  ToTensorV2(always_apply=True, p=1.0, transpose_mask=False),
+], p=1, bbox_params=None, keypoint_params=None, additional_targets={})
+
+---------- view_loader ----------
+X: shape=[32, 3, 224, 224] - min = 0 - max = 254
+y: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
+
+
+X: shape=[32, 3, 224, 224] - min = 0 - max = 254
+y: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
+
+
+========== model_cfg ==========
+<function breast_baselines_v0 at 0x7f1883cfedd0>
+{'model_name': 'se_resnext50_32x4d', 'output_classes': 2, 'num_classes': 2048, 'pretrained': True}
+
+========== model_settings ==========
++ densenet121:
+{'imagenet': {'input_range': [0, 1],
+              'input_size': [3, 224, 224],
+              'input_space': 'RGB',
+              'mean': [0.485, 0.456, 0.406],
+              'num_classes': 1000,
+              'std': [0.229, 0.224, 0.225],
+              'url': 'http://data.lip6.fr/cadene/pretrainedmodels/densenet121-fbdb23505.pth'}}
+
++ se_resnext50_32x4d:
+{'imagenet': {'input_range': [0, 1],
+              'input_size': [3, 224, 224],
+              'input_space': 'RGB',
+              'mean': [0.485, 0.456, 0.406],
+              'num_classes': 1000,
+              'std': [0.229, 0.224, 0.225],
+              'url': 'http://data.lip6.fr/cadene/pretrainedmodels/se_resnext50_32x4d-a260b3a4.pth'}}
+
++ se_resnext50_32x4d:
+{'imagenet': {'input_range': [0, 1],
+              'input_size': [3, 224, 224],
+              'input_space': 'RGB',
+              'mean': [0.485, 0.456, 0.406],
+              'num_classes': 1000,
+              'std': [0.229, 0.224, 0.225],
+              'url': 'http://data.lip6.fr/cadene/pretrainedmodels/se_resnext50_32x4d-a260b3a4.pth'}}
+
+Compose([
+  GetLargestComponent(always_apply=False, p=1, verbose=False, min_size=400, opening_size=(50, 50)),
+  Resize(always_apply=False, p=1, height=224, width=224, interpolation=1),
+  Normalize(always_apply=False, p=1.0, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=255.0),
+  ToTensorV2(always_apply=True, p=1.0, transpose_mask=False),
+], p=1, bbox_params=None, keypoint_params=None, additional_targets={})
+
+X: shape=torch.Size([16, 3, 224, 224]), dtype=torch.float32 [-2.1179039478302, 2.6399998664855957]
+y: shape=torch.Size([16]), dtype=torch.int64 - (tensor([0, 1]), tensor([ 6, 10]))
+y_pred: shape=torch.Size([16, 2]), dtype=torch.float32 - tensor([0.5360, 0.4640], grad_fn=<SelectBackward0>)
+========== Save app_cfg ==========
+{'data_augs_cfg': {'crop_v0': {'cfg': {'crop_size': 256,
+                                       'image_size': 224,
+                                       'scale_size': None},
+                               'train_aug_cls': 'breast_train_aug_crop_v0',
+                               'valid_aug_cls': 'breast_valid_aug_crop_v0'}},
+ 'dataset_cfg': {'breast_imgage': {'data_root': '/kaggle/input/adler-breast-cancer-image/image_{size}'},
+                 'breast_org': {'data_root': '/kaggle/input/rsna-breast-cancer-detection'}},
+ 'exps_dir': '/kaggle/working/exps',
+ 'input_dir': '/kaggle/input',
+ 'models_cfg': {'baseline_densenet121_v0': {'cfg': {'model_name': 'densenet121',
+                                                    'num_classes': 1024,
+                                                    'output_classes': 2,
+                                                    'pretrained': True},
+                                            'cls': 'breast_baselines_v0'},
+                'baseline_resnet50_v0': {'cfg': {'model_name': 'resnet50',
+                                                 'num_classes': 512,
+                                                 'output_classes': 2,
+                                                 'pretrained': False},
+                                         'cls': 'breast_baselines_v0'},
+                'baseline_se_resnext50_32x4d_v0': {'cfg': {'model_name': 'se_resnext50_32x4d',
+                                                           'num_classes': 1024,
+                                                           'output_classes': 2,
+                                                           'pretrained': True},
+                                                   'cls': 'breast_baselines_v0'},
+                'baseline_se_resnext50_32x4d_v1': {'cfg': {'model_name': 'se_resnext50_32x4d',
+                                                           'num_classes': 2048,
+                                                           'output_classes': 2,
+                                                           'pretrained': False},
+                                                   'cls': 'breast_baselines_v0'},
+                'baseline_se_resnext50_32x4d_v2': {'cfg': {'model_name': 'se_resnext50_32x4d',
+                                                           'num_classes': 2048,
+                                                           'output_classes': 2,
+                                                           'pretrained': True},
+                                                   'cls': 'breast_baselines_v0'}},
+ 'output_dir': '/kaggle/working',
+ 'pretrained_dir': '/kaggle/input/adler-torch-pretrainedmodels-weights'}
+
+========== Save params_cfg ==========
+{'batch_size': 32,
+ 'crop_size': 256,
+ 'data_aug': 'crop_v0',
+ 'data_size': 256,
+ 'early_stopping': 5,
+ 'epochs': 1000,
+ 'gpus': '0, 1',
+ 'gradient_accumulation_steps': 1,
+ 'image_size': 224,
+ 'label_smoothing': 0.2,
+ 'learning_rate': 1e-05,
+ 'logs_file': '/kaggle/working/exps/exps-baseline_se_resnext50_32x4d_v2-crop_v0-230105-01/train.log.txt',
+ 'max_grad_norm': None,
+ 'model_name': 'baseline_se_resnext50_32x4d_v2',
+ 'model_weight': None,
+ 'nfolds': 3,
+ 'num_workers': 2,
+ 'optim_cls': 'AdamW',
+ 'pin_memory': True,
+ 'rclone_check': False,
+ 'rclone_init': False,
+ 'rclone_upload': False,
+ 'run_date': '230105-0849',
+ 'run_dir': '/kaggle/working/exps/exps-baseline_se_resnext50_32x4d_v2-crop_v0-230105-01',
+ 'run_name': 'baseline_se_resnext50_32x4d_v2-crop_v0-230105-01',
+ 'seed': 42,
+ 'train_nsteps': 0,
+ 'valid_nsteps': 0,
+ 'weight_decay': 1e-06}
+
+========== run_dir: [/kaggle/working/exps/exps-baseline_se_resnext50_32x4d_v2-crop_v0-230105-01] ==========
+
+========== Finished Time ==========
+Finished Time: 05-01-2023 17:50:07
+
+========== TRAINING DATA [230105-0850] ==========
++ device: cuda
+
+*** FOLD 0 [230105-0850] ***
+
+--- model_info --- 
+<function breast_baselines_v0 at 0x7f1883cfedd0>
+{'model_name': 'se_resnext50_32x4d',
+ 'num_classes': 2048,
+ 'output_classes': 2,
+ 'pretrained': True,
+ 'weight': None}
+
+
+--- train_aug --- 
+Compose([
+  GetLargestComponent(always_apply=False, p=1, verbose=False, min_size=400, opening_size=(50, 50)),
+  Resize(always_apply=False, p=1, height=256, width=256, interpolation=1),
+  RandomCrop(always_apply=False, p=1, height=224, width=224),
+  Rotate(always_apply=False, p=0.5, limit=(-5, 5), interpolation=1, border_mode=4, value=None, mask_value=None, rotate_method='largest_box', crop_border=False),
+  HorizontalFlip(always_apply=False, p=0.5),
+  PadIfNeeded(always_apply=False, p=1, min_height=224, min_width=224, pad_height_divisor=None, pad_width_divisor=None, border_mode=0, value=0, mask_value=None),
+  Normalize(always_apply=False, p=1.0, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=255.0),
+  ToTensorV2(always_apply=True, p=1.0, transpose_mask=False),
+], p=1.0, bbox_params=None, keypoint_params=None, additional_targets={})
+
+
+--- valid_aug --- 
+Compose([
+  GetLargestComponent(always_apply=False, p=1, verbose=False, min_size=400, opening_size=(50, 50)),
+  Resize(always_apply=False, p=1, height=256, width=256, interpolation=1),
+  RandomCrop(always_apply=False, p=1, height=224, width=224),
+  Rotate(always_apply=False, p=0.5, limit=(-5, 5), interpolation=1, border_mode=4, value=None, mask_value=None, rotate_method='largest_box', crop_border=False),
+  HorizontalFlip(always_apply=False, p=0.5),
+  PadIfNeeded(always_apply=False, p=1, min_height=224, min_width=224, pad_height_divisor=None, pad_width_divisor=None, border_mode=0, value=0, mask_value=None),
+  Normalize(always_apply=False, p=1.0, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], max_pixel_value=255.0),
+  ToTensorV2(always_apply=True, p=1.0, transpose_mask=False),
+], p=1.0, bbox_params=None, keypoint_params=None, additional_targets={})
+
+Train/Valid Data: 71246 / 35850
+Train/Valid Batches: 2227 / 1121
+
+--- optimizer --- 
+AdamW (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    eps: 1e-08
+    lr: 1e-05
+    maximize: False
+    weight_decay: 1e-06
+)
+
+
+--- criterion --- 
+CrossEntropyLoss()
+
+*** [Epoch 1/1000] ***
+epoch: 1 - fold: 0 - loss: 0.5688982009887695 - train_pf1: 0.6431959933109163 - train_acc: 0.791047918479634 - train_f1: 0.7970554154454367 - train_auc: 0.8822539036225798 - valid_loss: 0.7387042465643836 - valid_pf1: 0.2101618107623677 - valid_acc: 0.5604741980474198 - valid_f1: 0.3138091712755302 - valid_auc: 0.6313869186074785 - has_best: True - stop_info: 
+
+*** Best Info ***
+Best: True - epoch: 1 - loss: 0.7387 - pdf1: 0.2102
+
+*** Early Stopping ***
+0/5
+
+*** [Epoch 2/1000] ***
+epoch: 2 - fold: 0 - loss: 0.44862088396456085 - train_pf1: 0.9131620606931465 - train_acc: 0.9595205344861466 - train_f1: 0.959957791847162 - train_auc: 0.990684307384034 - valid_loss: 0.7720140502135951 - valid_pf1: 0.11192526151715894 - valid_acc: 0.5274198047419805 - valid_f1: 0.15928940055577612 - valid_auc: 0.5926708036935239 - has_best: False - stop_info: 
+
+*** Best Info ***
+
+
+*** Early Stopping ***
+1/5
+
+*** [Epoch 3/1000] ***
+epoch: 3 - fold: 0 - loss: 0.4297050107981413 - train_pf1: 0.9595955467357993 - train_acc: 0.9805041686550824 - train_f1: 0.9805986618803515 - train_auc: 0.9974245698828765 - valid_loss: 0.7881676633372889 - valid_pf1: 0.06757518039978543 - valid_acc: 0.5188005578800557 - valid_f1: 0.1009953619261035 - valid_auc: 0.5703586888651576 - has_best: False - stop_info: 
+
+*** Best Info ***
+
+
+*** Early Stopping ***
+2/5
+
+*** [Epoch 4/1000] ***
+epoch: 4 - fold: 0 - loss: 0.42319908568181425 - train_pf1: 0.9752799973953482 - train_acc: 0.9884204025489151 - train_f1: 0.9884458636191755 - train_auc: 0.9987888583403892 - valid_loss: 0.7994747027342709 - valid_pf1: 0.03863426143000157 - valid_acc: 0.5101255230125523 - valid_f1: 0.05712444969397616 - valid_auc: 0.5710101900643663 - has_best: False - stop_info: train_pf1>=0.97
+
+*** Best Info ***
+
+
+*** Early Stopping ***
+3/5
+
+
+*** END [230105-1149] - time: 10768s
+
+========== df_metrics_all ==========
+
+========== df_metrics_best ==========
+
+========== metrics_best_mean ==========
+{'loss': 0.5688982009887695, 'train_pf1': 0.6431959933109163, 'train_acc': 0.791047918479634, 'train_f1': 0.7970554154454367, 'train_auc': 0.8822539036225798, 'valid_loss': 0.7387042465643836, 'valid_pf1': 0.2101618107623677, 'valid_acc': 0.5604741980474198, 'valid_f1': 0.3138091712755302, 'valid_auc': 0.6313869186074785}
+
+========== df_metrics_avg ==========
+
+========== metrics_avg_mean ==========
+{'epoch': 4.0, 'loss': 0.42319908568181425, 'valid_loss': 0.7387042465643836, 'train_pf1': 0.9752799973953482, 'valid_pf1': 0.2101618107623677}
+
+*** FOLD 1 [230105-1149] ***
+*** [Epoch 1/1000] ***
+epoch: 1 - fold: 1 - loss: 0.5687151040482734 - train_pf1: 0.6450929646229242 - train_acc: 0.7911630892902002 - train_f1: 0.8000694759907009 - train_auc: 0.8837410867979696 - valid_loss: 0.7334194201639843 - valid_pf1: 0.21623645074542933 - valid_acc: 0.5671519665933074 - valid_f1: 0.31418480933434667 - valid_auc: 0.6465610691938133 - has_best: True - stop_info: 
+
+*** Best Info ***
+Best: True - epoch: 1 - loss: 0.7334 - pdf1: 0.2162
+
+*** Early Stopping ***
+0/5
+
+*** [Epoch 2/1000] ***
+epoch: 2 - fold: 1 - loss: 0.44738422938223393 - train_pf1: 0.915795650738303 - train_acc: 0.960211572277891 - train_f1: 0.960554533254009 - train_auc: 0.9915938893302343 - valid_loss: 0.7673657544575874 - valid_pf1: 0.11973890726766909 - valid_acc: 0.5464702894870492 - valid_f1: 0.20315288518738844 - valid_auc: 0.6221673192221344 - has_best: False - stop_info: 
+
+*** Best Info ***
+
+
+*** Early Stopping ***
+1/5
+
+*** [Epoch 3/1000] ***
+epoch: 3 - fold: 1 - loss: 0.42808514341179815 - train_pf1: 0.9629149353233317 - train_acc: 0.9826248360175287 - train_f1: 0.9826936710268421 - train_auc: 0.9981453183597654 - valid_loss: 0.7868393691868558 - valid_pf1: 0.06707296036847382 - valid_acc: 0.5232774674115456 - valid_f1: 0.1099873577749684 - valid_auc: 0.6017710014889764 - has_best: False - stop_info: 
+
+*** Best Info ***
+
+
+*** Early Stopping ***
+2/5
+
+*** [Epoch 4/1000] ***
+epoch: 4 - fold: 1 - loss: 0.4225964863252427 - train_pf1: 0.9765793194261267 - train_acc: 0.9890027074552712 - train_f1: 0.9890204820955831 - train_auc: 0.9992163236746451 - valid_loss: 0.7935414072193394 - valid_pf1: 0.047389344569970904 - valid_acc: 0.5197505784097963 - valid_f1: 0.0852367388617187 - valid_auc: 0.5809247481706916 - has_best: False - stop_info: train_pf1>=0.97
+
+*** Best Info ***
+
+
+*** Early Stopping ***
+3/5
+
+
+*** END [230105-1446] - time: 10610s
+
+========== df_metrics_all ==========
+
+========== df_metrics_best ==========
+
+========== metrics_best_mean ==========
+{'loss': 0.5688066525185215, 'train_pf1': 0.6441444789669202, 'train_acc': 0.7911055038849171, 'train_f1': 0.7985624457180688, 'train_auc': 0.8829974952102747, 'valid_loss': 0.736061833364184, 'valid_pf1': 0.2131991307538985, 'valid_acc': 0.5638130823203635, 'valid_f1': 0.31399699030493844, 'valid_auc': 0.6389739939006459}
+
+========== df_metrics_avg ==========
+
+========== metrics_avg_mean ==========
+{'epoch': 4.0, 'loss': 0.42289778600352845, 'valid_loss': 0.736061833364184, 'train_pf1': 0.9759296584107375, 'valid_pf1': 0.2131991307538985}
+
+*** FOLD 2 [230105-1446] ***
+*** [Epoch 1/1000] ***
+epoch: 1 - fold: 2 - loss: 0.5698093682447285 - train_pf1: 0.6389762212107986 - train_acc: 0.7896257644616507 - train_f1: 0.7924094784630717 - train_auc: 0.8814768615688916 - valid_loss: 0.7278743124199937 - valid_pf1: 0.23296329235083924 - valid_acc: 0.5744609540833426 - valid_f1: 0.34704722722207937 - valid_auc: 0.656413300714758 - has_best: True - stop_info: 
+
+*** Best Info ***
+Best: True - epoch: 1 - loss: 0.7279 - pdf1: 0.2330
+
+*** Early Stopping ***
+0/5
+
+*** [Epoch 2/1000] ***
+epoch: 2 - fold: 2 - loss: 0.4489844181111728 - train_pf1: 0.9116787148162926 - train_acc: 0.9583684003815295 - train_f1: 0.9586951681140059 - train_auc: 0.9902245626320013 - valid_loss: 0.7723489189595384 - valid_pf1: 0.1089789432550609 - valid_acc: 0.5297452798569993 - valid_f1: 0.15675865177542944 - valid_auc: 0.6351478695170285 - has_best: False - stop_info: 
+
+*** Best Info ***
+
+
+*** Early Stopping ***
+1/5
+
+*** [Epoch 3/1000] ***
+epoch: 3 - fold: 2 - loss: 0.4293220018703805 - train_pf1: 0.9598488314533241 - train_acc: 0.9813723839982046 - train_f1: 0.9814317673378076 - train_auc: 0.99689023811103 - valid_loss: 0.7798316386579083 - valid_pf1: 0.08561373021427564 - valid_acc: 0.531421070271478 - valid_f1: 0.14468518990568444 - valid_auc: 0.6137796913922087 - has_best: False - stop_info: 
+
+*** Best Info ***
+
+
+*** Early Stopping ***
+2/5
+
+*** [Epoch 4/1000] ***
+epoch: 4 - fold: 2 - loss: 0.4230708601739077 - train_pf1: 0.9748512304353039 - train_acc: 0.988666330023004 - train_f1: 0.9886736381732036 - train_auc: 0.9983726989015959 - valid_loss: 0.7925862902717147 - valid_pf1: 0.05174454121738233 - valid_acc: 0.5159479387777902 - valid_f1: 0.07818733046114568 - valid_auc: 0.6041288285614047 - has_best: False - stop_info: train_pf1>=0.97
+
+*** Best Info ***
+
+
+*** Early Stopping ***
+3/5
+
+
+*** END [230105-1745] - time: 10746s
+
+========== df_metrics_all ==========
+
+========== df_metrics_best ==========
+
+========== metrics_best_mean ==========
+{'loss': 0.5691408910939239, 'train_pf1': 0.6424217263815463, 'train_acc': 0.790612257410495, 'train_f1': 0.7965114566330698, 'train_auc': 0.8824906173298137, 'valid_loss': 0.7333326597161206, 'valid_pf1': 0.2197871846195454, 'valid_acc': 0.5673623729080233, 'valid_f1': 0.3250137359439854, 'valid_auc': 0.6447870961720166}
+
+========== df_metrics_avg ==========
+
+========== metrics_avg_mean ==========
+{'epoch': 4.0, 'loss': 0.42295547739365486, 'valid_loss': 0.7333326597161206, 'train_pf1': 0.9755701824189263, 'valid_pf1': 0.2197871846195454}
+
+========== END TRAINING DATA [230105-1745] ==========
+========== Save app_cfg ==========
+{'data_augs_cfg': {'crop_v0': {'cfg': {'crop_size': 256,
+                                       'image_size': 224,
+                                       'scale_size': None},
+                               'train_aug_cls': 'breast_train_aug_crop_v0',
+                               'valid_aug_cls': 'breast_valid_aug_crop_v0'}},
+ 'dataset_cfg': {'breast_imgage': {'data_root': '/kaggle/input/adler-breast-cancer-image/image_{size}'},
+                 'breast_org': {'data_root': '/kaggle/input/rsna-breast-cancer-detection'}},
+ 'exps_dir': '/kaggle/working/exps',
+ 'input_dir': '/kaggle/input',
+ 'models_cfg': {'baseline_densenet121_v0': {'cfg': {'model_name': 'densenet121',
+                                                    'num_classes': 1024,
+                                                    'output_classes': 2,
+                                                    'pretrained': True},
+                                            'cls': 'breast_baselines_v0'},
+                'baseline_resnet50_v0': {'cfg': {'model_name': 'resnet50',
+                                                 'num_classes': 512,
+                                                 'output_classes': 2,
+                                                 'pretrained': False},
+                                         'cls': 'breast_baselines_v0'},
+                'baseline_se_resnext50_32x4d_v0': {'cfg': {'model_name': 'se_resnext50_32x4d',
+                                                           'num_classes': 1024,
+                                                           'output_classes': 2,
+                                                           'pretrained': True},
+                                                   'cls': 'breast_baselines_v0'},
+                'baseline_se_resnext50_32x4d_v1': {'cfg': {'model_name': 'se_resnext50_32x4d',
+                                                           'num_classes': 2048,
+                                                           'output_classes': 2,
+                                                           'pretrained': False},
+                                                   'cls': 'breast_baselines_v0'},
+                'baseline_se_resnext50_32x4d_v2': {'cfg': {'model_name': 'se_resnext50_32x4d',
+                                                           'num_classes': 2048,
+                                                           'output_classes': 2,
+                                                           'pretrained': True,
+                                                           'weight': None},
+                                                   'cls': 'breast_baselines_v0'}},
+ 'output_dir': '/kaggle/working',
+ 'pretrained_dir': '/kaggle/input/adler-torch-pretrainedmodels-weights'}
+
+========== Save params_cfg ==========
+{'batch_size': 32,
+ 'crop_size': 256,
+ 'data_aug': 'crop_v0',
+ 'data_size': 256,
+ 'early_stopping': 5,
+ 'epochs': 1000,
+ 'gpus': '0, 1',
+ 'gradient_accumulation_steps': 1,
+ 'image_size': 224,
+ 'label_smoothing': 0.2,
+ 'learning_rate': 1e-05,
+ 'logs_file': '/kaggle/working/exps/exps-baseline_se_resnext50_32x4d_v2-crop_v0-230105-01/train.log.txt',
+ 'max_grad_norm': None,
+ 'model_name': 'baseline_se_resnext50_32x4d_v2',
+ 'model_weight': None,
+ 'nfolds': 3,
+ 'num_workers': 2,
+ 'optim_cls': 'AdamW',
+ 'pin_memory': True,
+ 'rclone_check': False,
+ 'rclone_init': False,
+ 'rclone_upload': False,
+ 'run_date': '230105-0849',
+ 'run_dir': '/kaggle/working/exps/exps-baseline_se_resnext50_32x4d_v2-crop_v0-230105-01',
+ 'run_name': 'baseline_se_resnext50_32x4d_v2-crop_v0-230105-01',
+ 'seed': 42,
+ 'train_nsteps': 0,
+ 'valid_nsteps': 0,
+ 'weight_decay': 1e-06}
+
+========== run_dir: [/kaggle/working/exps/exps-baseline_se_resnext50_32x4d_v2-crop_v0-230105-01] ==========
+
+========== Finished Time ==========
+Finished Time: 06-01-2023 02:45:31
+
+Finished!
+Shutdown kernel!
