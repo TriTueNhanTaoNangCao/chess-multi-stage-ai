@@ -1,0 +1,13 @@
+﻿pair,agent,games,wins,draws,losses,white_games,white_wins,white_draws,white_losses,black_games,black_wins,black_draws,black_losses,elo,timeout_games,error_games,win_pct,draw_pct,score_pct,white_win_pct,white_draw_pct,white_score_pct,black_win_pct,black_draw_pct,black_score_pct,ms_per_move
+supervised__rl_policy,rl_policy,2,0,2,0,1,0,1,0,1,0,1,0,1200.0,0,0,0.0,100.0,50.0,0.0,100.0,50.0,0.0,100.0,50.0,5.491
+supervised__rl_policy,supervised,2,0,2,0,1,0,1,0,1,0,1,0,1200.0,0,0,0.0,100.0,50.0,0.0,100.0,50.0,0.0,100.0,50.0,12.125
+supervised__alphago,alphago,2,0,2,0,1,0,1,0,1,0,1,0,1200.0,0,0,0.0,100.0,50.0,0.0,100.0,50.0,0.0,100.0,50.0,2639.611
+supervised__alphago,supervised,2,0,2,0,1,0,1,0,1,0,1,0,1200.0,0,0,0.0,100.0,50.0,0.0,100.0,50.0,0.0,100.0,50.0,4.788
+supervised__alphazero,alphazero,2,0,2,0,1,0,1,0,1,0,1,0,1200.0,0,0,0.0,100.0,50.0,0.0,100.0,50.0,0.0,100.0,50.0,1951.354
+supervised__alphazero,supervised,2,0,2,0,1,0,1,0,1,0,1,0,1200.0,0,0,0.0,100.0,50.0,0.0,100.0,50.0,0.0,100.0,50.0,4.422
+rl_policy__alphago,alphago,2,0,2,0,1,0,1,0,1,0,1,0,1200.0,0,0,0.0,100.0,50.0,0.0,100.0,50.0,0.0,100.0,50.0,2080.547
+rl_policy__alphago,rl_policy,2,0,2,0,1,0,1,0,1,0,1,0,1200.0,0,0,0.0,100.0,50.0,0.0,100.0,50.0,0.0,100.0,50.0,3.429
+rl_policy__alphazero,alphazero,2,0,2,0,1,0,1,0,1,0,1,0,1200.0,0,0,0.0,100.0,50.0,0.0,100.0,50.0,0.0,100.0,50.0,2481.611
+rl_policy__alphazero,rl_policy,2,0,2,0,1,0,1,0,1,0,1,0,1200.0,0,0,0.0,100.0,50.0,0.0,100.0,50.0,0.0,100.0,50.0,4.841
+alphago__alphazero,alphago,2,0,2,0,1,0,1,0,1,0,1,0,1200.0,0,0,0.0,100.0,50.0,0.0,100.0,50.0,0.0,100.0,50.0,2953.126
+alphago__alphazero,alphazero,2,0,2,0,1,0,1,0,1,0,1,0,1200.0,0,0,0.0,100.0,50.0,0.0,100.0,50.0,0.0,100.0,50.0,2525.337

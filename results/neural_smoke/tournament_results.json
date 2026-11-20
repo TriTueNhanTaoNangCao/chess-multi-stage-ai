@@ -1,0 +1,2176 @@
+{
+  "config": {
+    "schema_version": 1,
+    "seed": 42,
+    "games_per_pair": 2,
+    "max_plies": 8,
+    "claim_draw": true,
+    "device": "cpu",
+    "torch_threads": 2,
+    "move_timeout_seconds": 120,
+    "startup_timeout_seconds": 300,
+    "openings_file": "thực nghiệm/chess/openings_100.json",
+    "output_dir": "results/neural_200",
+    "agents": [
+      {
+        "id": "supervised",
+        "key": "supervised",
+        "kwargs": {
+          "checkpoint": "checkpoints/stage4/best_lichess.pt"
+        }
+      },
+      {
+        "id": "rl_policy",
+        "key": "rl_policy",
+        "kwargs": {
+          "checkpoint": "checkpoints/stage5/last.pt"
+        }
+      },
+      {
+        "id": "alphago",
+        "key": "alphago",
+        "kwargs": {
+          "checkpoint_policy": "checkpoints/stage6/policy.pt",
+          "checkpoint_value": "checkpoints/stage6/value.pt",
+          "simulations": 100,
+          "rollout_weight": 0.5,
+          "max_rollout_depth": 15
+        }
+      },
+      {
+        "id": "alphazero",
+        "key": "alphazero",
+        "kwargs": {
+          "checkpoint": "checkpoints/stage7/best.pt",
+          "simulations": 100,
+          "temperature": 0.0,
+          "add_noise": false
+        }
+      }
+    ],
+    "openings": [
+      [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ]
+    ],
+    "mode": "smoke"
+  },
+  "summary": {
+    "completed_games": 12,
+    "expected_games": 12,
+    "complete": true,
+    "clean": true,
+    "mode": "smoke",
+    "error_games": 0,
+    "timeout_games": 0,
+    "percent_unit": "0..100",
+    "paired_games_are_not_independent": true,
+    "checkpoint_sha256": {
+      "supervised.checkpoint": "28e3c34619255796fc58a2006e7869a533812046a3b52366e8d8fe3925d7d464",
+      "rl_policy.checkpoint": "4d70697035064bfc4be2e505959bb070d4a3afd0c697390b78908605016e1832",
+      "alphago.checkpoint_policy": "4d70697035064bfc4be2e505959bb070d4a3afd0c697390b78908605016e1832",
+      "alphago.checkpoint_value": "93dd82049962b4e8f9c94927879a766ba10fc914f9474dda6a794b3f88ca07ca",
+      "alphazero.checkpoint": "6c8e5302898c2eb6889890aacf09845215a1d1f79814b91a14267302f74b4ca8"
+    },
+    "fingerprint": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573"
+  },
+  "leaderboard": [
+    {
+      "agent": "alphago",
+      "games": 6,
+      "wins": 0,
+      "draws": 6,
+      "losses": 0,
+      "white_games": 3,
+      "white_wins": 0,
+      "white_draws": 3,
+      "white_losses": 0,
+      "black_games": 3,
+      "black_wins": 0,
+      "black_draws": 3,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 2557.761
+    },
+    {
+      "agent": "alphazero",
+      "games": 6,
+      "wins": 0,
+      "draws": 6,
+      "losses": 0,
+      "white_games": 3,
+      "white_wins": 0,
+      "white_draws": 3,
+      "white_losses": 0,
+      "black_games": 3,
+      "black_wins": 0,
+      "black_draws": 3,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 2319.434
+    },
+    {
+      "agent": "rl_policy",
+      "games": 6,
+      "wins": 0,
+      "draws": 6,
+      "losses": 0,
+      "white_games": 3,
+      "white_wins": 0,
+      "white_draws": 3,
+      "white_losses": 0,
+      "black_games": 3,
+      "black_wins": 0,
+      "black_draws": 3,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 4.587
+    },
+    {
+      "agent": "supervised",
+      "games": 6,
+      "wins": 0,
+      "draws": 6,
+      "losses": 0,
+      "white_games": 3,
+      "white_wins": 0,
+      "white_draws": 3,
+      "white_losses": 0,
+      "black_games": 3,
+      "black_wins": 0,
+      "black_draws": 3,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 7.112
+    }
+  ],
+  "matchups": [
+    {
+      "pair": "supervised__rl_policy",
+      "agent": "rl_policy",
+      "games": 2,
+      "wins": 0,
+      "draws": 2,
+      "losses": 0,
+      "white_games": 1,
+      "white_wins": 0,
+      "white_draws": 1,
+      "white_losses": 0,
+      "black_games": 1,
+      "black_wins": 0,
+      "black_draws": 1,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 5.491
+    },
+    {
+      "pair": "supervised__rl_policy",
+      "agent": "supervised",
+      "games": 2,
+      "wins": 0,
+      "draws": 2,
+      "losses": 0,
+      "white_games": 1,
+      "white_wins": 0,
+      "white_draws": 1,
+      "white_losses": 0,
+      "black_games": 1,
+      "black_wins": 0,
+      "black_draws": 1,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 12.125
+    },
+    {
+      "pair": "supervised__alphago",
+      "agent": "alphago",
+      "games": 2,
+      "wins": 0,
+      "draws": 2,
+      "losses": 0,
+      "white_games": 1,
+      "white_wins": 0,
+      "white_draws": 1,
+      "white_losses": 0,
+      "black_games": 1,
+      "black_wins": 0,
+      "black_draws": 1,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 2639.611
+    },
+    {
+      "pair": "supervised__alphago",
+      "agent": "supervised",
+      "games": 2,
+      "wins": 0,
+      "draws": 2,
+      "losses": 0,
+      "white_games": 1,
+      "white_wins": 0,
+      "white_draws": 1,
+      "white_losses": 0,
+      "black_games": 1,
+      "black_wins": 0,
+      "black_draws": 1,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 4.788
+    },
+    {
+      "pair": "supervised__alphazero",
+      "agent": "alphazero",
+      "games": 2,
+      "wins": 0,
+      "draws": 2,
+      "losses": 0,
+      "white_games": 1,
+      "white_wins": 0,
+      "white_draws": 1,
+      "white_losses": 0,
+      "black_games": 1,
+      "black_wins": 0,
+      "black_draws": 1,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 1951.354
+    },
+    {
+      "pair": "supervised__alphazero",
+      "agent": "supervised",
+      "games": 2,
+      "wins": 0,
+      "draws": 2,
+      "losses": 0,
+      "white_games": 1,
+      "white_wins": 0,
+      "white_draws": 1,
+      "white_losses": 0,
+      "black_games": 1,
+      "black_wins": 0,
+      "black_draws": 1,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 4.422
+    },
+    {
+      "pair": "rl_policy__alphago",
+      "agent": "alphago",
+      "games": 2,
+      "wins": 0,
+      "draws": 2,
+      "losses": 0,
+      "white_games": 1,
+      "white_wins": 0,
+      "white_draws": 1,
+      "white_losses": 0,
+      "black_games": 1,
+      "black_wins": 0,
+      "black_draws": 1,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 2080.547
+    },
+    {
+      "pair": "rl_policy__alphago",
+      "agent": "rl_policy",
+      "games": 2,
+      "wins": 0,
+      "draws": 2,
+      "losses": 0,
+      "white_games": 1,
+      "white_wins": 0,
+      "white_draws": 1,
+      "white_losses": 0,
+      "black_games": 1,
+      "black_wins": 0,
+      "black_draws": 1,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 3.429
+    },
+    {
+      "pair": "rl_policy__alphazero",
+      "agent": "alphazero",
+      "games": 2,
+      "wins": 0,
+      "draws": 2,
+      "losses": 0,
+      "white_games": 1,
+      "white_wins": 0,
+      "white_draws": 1,
+      "white_losses": 0,
+      "black_games": 1,
+      "black_wins": 0,
+      "black_draws": 1,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 2481.611
+    },
+    {
+      "pair": "rl_policy__alphazero",
+      "agent": "rl_policy",
+      "games": 2,
+      "wins": 0,
+      "draws": 2,
+      "losses": 0,
+      "white_games": 1,
+      "white_wins": 0,
+      "white_draws": 1,
+      "white_losses": 0,
+      "black_games": 1,
+      "black_wins": 0,
+      "black_draws": 1,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 4.841
+    },
+    {
+      "pair": "alphago__alphazero",
+      "agent": "alphago",
+      "games": 2,
+      "wins": 0,
+      "draws": 2,
+      "losses": 0,
+      "white_games": 1,
+      "white_wins": 0,
+      "white_draws": 1,
+      "white_losses": 0,
+      "black_games": 1,
+      "black_wins": 0,
+      "black_draws": 1,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 2953.126
+    },
+    {
+      "pair": "alphago__alphazero",
+      "agent": "alphazero",
+      "games": 2,
+      "wins": 0,
+      "draws": 2,
+      "losses": 0,
+      "white_games": 1,
+      "white_wins": 0,
+      "white_draws": 1,
+      "white_losses": 0,
+      "black_games": 1,
+      "black_wins": 0,
+      "black_draws": 1,
+      "black_losses": 0,
+      "elo": 1200.0,
+      "timeout_games": 0,
+      "error_games": 0,
+      "win_pct": 0.0,
+      "draw_pct": 100.0,
+      "score_pct": 50.0,
+      "white_win_pct": 0.0,
+      "white_draw_pct": 100.0,
+      "white_score_pct": 50.0,
+      "black_win_pct": 0.0,
+      "black_draw_pct": 100.0,
+      "black_score_pct": 50.0,
+      "ms_per_move": 2525.337
+    }
+  ],
+  "records": [
+    {
+      "white": "supervised",
+      "black": "rl_policy",
+      "result": "1/2-1/2",
+      "reason": "max_plies_adjudication",
+      "error": "",
+      "moves": [
+        "f3e5",
+        "f5e4",
+        "a2a3",
+        "b4e7",
+        "b1c3",
+        "g8f6",
+        "c1f4",
+        "d7d5"
+      ],
+      "initial_fen": "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5",
+      "final_fen": "rnbqk2r/ppp1b1pp/5n2/3pN3/3PpB2/P1N5/1PP1KPPP/R2Q1B1R w kq - 0 9",
+      "white_seconds": 0.0743615000101272,
+      "black_seconds": 0.020310400002927054,
+      "white_calls": 4,
+      "black_calls": 4,
+      "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "initial_moves": [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ],
+      "claim_draw": true,
+      "telemetry": [
+        {
+          "ply": 1,
+          "color": "white",
+          "seconds": 0.057504800002789125,
+          "uci": "f3e5",
+          "san": "Nxe5"
+        },
+        {
+          "ply": 2,
+          "color": "black",
+          "seconds": 0.005263899998681154,
+          "uci": "f5e4",
+          "san": "fxe4"
+        },
+        {
+          "ply": 3,
+          "color": "white",
+          "seconds": 0.005652900006680284,
+          "uci": "a2a3",
+          "san": "a3"
+        },
+        {
+          "ply": 4,
+          "color": "black",
+          "seconds": 0.005145200004335493,
+          "uci": "b4e7",
+          "san": "Be7"
+        },
+        {
+          "ply": 5,
+          "color": "white",
+          "seconds": 0.005691999998816755,
+          "uci": "b1c3",
+          "san": "Nc3"
+        },
+        {
+          "ply": 6,
+          "color": "black",
+          "seconds": 0.004590600001392886,
+          "uci": "g8f6",
+          "san": "Nf6"
+        },
+        {
+          "ply": 7,
+          "color": "white",
+          "seconds": 0.0055118000018410385,
+          "uci": "c1f4",
+          "san": "Bf4"
+        },
+        {
+          "ply": 8,
+          "color": "black",
+          "seconds": 0.005310699998517521,
+          "uci": "d7d5",
+          "san": "d5"
+        }
+      ],
+      "id": "supervised__rl_policy__o000__l0",
+      "run_id": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573",
+      "started_at": "2026-11-20T09:40:21+00:00",
+      "ended_at": "2026-11-20T09:40:26+00:00",
+      "mode": "benchmark",
+      "pair": "supervised__rl_policy",
+      "opening_index": 0,
+      "leg": 0,
+      "seeds": {
+        "supervised": 568158102,
+        "rl_policy": 1726123331
+      },
+      "max_plies": 8,
+      "configs": {
+        "white": {
+          "label": "supervised",
+          "id": "supervised",
+          "key": "supervised",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage4/best_lichess.pt"
+          }
+        },
+        "black": {
+          "label": "rl_policy",
+          "id": "rl_policy",
+          "key": "rl_policy",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage5/last.pt"
+          }
+        }
+      }
+    },
+    {
+      "white": "rl_policy",
+      "black": "supervised",
+      "result": "1/2-1/2",
+      "reason": "max_plies_adjudication",
+      "error": "",
+      "moves": [
+        "f3e5",
+        "f5e4",
+        "a2a3",
+        "b4e7",
+        "b1c3",
+        "g8f6",
+        "c1f4",
+        "d7d5"
+      ],
+      "initial_fen": "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5",
+      "final_fen": "rnbqk2r/ppp1b1pp/5n2/3pN3/3PpB2/P1N5/1PP1KPPP/R2Q1B1R w kq - 0 9",
+      "white_seconds": 0.023619500003405847,
+      "black_seconds": 0.022634799999650568,
+      "white_calls": 4,
+      "black_calls": 4,
+      "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "initial_moves": [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ],
+      "claim_draw": true,
+      "telemetry": [
+        {
+          "ply": 1,
+          "color": "white",
+          "seconds": 0.007413100000121631,
+          "uci": "f3e5",
+          "san": "Nxe5"
+        },
+        {
+          "ply": 2,
+          "color": "black",
+          "seconds": 0.00574610000330722,
+          "uci": "f5e4",
+          "san": "fxe4"
+        },
+        {
+          "ply": 3,
+          "color": "white",
+          "seconds": 0.005372100000386126,
+          "uci": "a2a3",
+          "san": "a3"
+        },
+        {
+          "ply": 4,
+          "color": "black",
+          "seconds": 0.005860299999767449,
+          "uci": "b4e7",
+          "san": "Be7"
+        },
+        {
+          "ply": 5,
+          "color": "white",
+          "seconds": 0.005000600001949351,
+          "uci": "b1c3",
+          "san": "Nc3"
+        },
+        {
+          "ply": 6,
+          "color": "black",
+          "seconds": 0.005435899998701643,
+          "uci": "g8f6",
+          "san": "Nf6"
+        },
+        {
+          "ply": 7,
+          "color": "white",
+          "seconds": 0.005833700000948738,
+          "uci": "c1f4",
+          "san": "Bf4"
+        },
+        {
+          "ply": 8,
+          "color": "black",
+          "seconds": 0.005592499997874256,
+          "uci": "d7d5",
+          "san": "d5"
+        }
+      ],
+      "id": "supervised__rl_policy__o000__l1",
+      "run_id": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573",
+      "started_at": "2026-11-20T09:40:26+00:00",
+      "ended_at": "2026-11-20T09:40:29+00:00",
+      "mode": "benchmark",
+      "pair": "supervised__rl_policy",
+      "opening_index": 0,
+      "leg": 1,
+      "seeds": {
+        "supervised": 568158102,
+        "rl_policy": 1726123331
+      },
+      "max_plies": 8,
+      "configs": {
+        "white": {
+          "label": "rl_policy",
+          "id": "rl_policy",
+          "key": "rl_policy",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage5/last.pt"
+          }
+        },
+        "black": {
+          "label": "supervised",
+          "id": "supervised",
+          "key": "supervised",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage4/best_lichess.pt"
+          }
+        }
+      }
+    },
+    {
+      "white": "supervised",
+      "black": "alphago",
+      "result": "1/2-1/2",
+      "reason": "max_plies_adjudication",
+      "error": "",
+      "moves": [
+        "f3e5",
+        "f5e4",
+        "a2a3",
+        "b4e7",
+        "b1c3",
+        "g8f6",
+        "c1f4",
+        "d7d5"
+      ],
+      "initial_fen": "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5",
+      "final_fen": "rnbqk2r/ppp1b1pp/5n2/3pN3/3PpB2/P1N5/1PP1KPPP/R2Q1B1R w kq - 0 9",
+      "white_seconds": 0.02208720000635367,
+      "black_seconds": 11.454233500000555,
+      "white_calls": 4,
+      "black_calls": 4,
+      "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "initial_moves": [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ],
+      "claim_draw": true,
+      "telemetry": [
+        {
+          "ply": 1,
+          "color": "white",
+          "seconds": 0.006678000005194917,
+          "uci": "f3e5",
+          "san": "Nxe5"
+        },
+        {
+          "ply": 2,
+          "color": "black",
+          "seconds": 3.0429406000039307,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": -0.022920648288664247,
+          "uci": "f5e4",
+          "san": "fxe4"
+        },
+        {
+          "ply": 3,
+          "color": "white",
+          "seconds": 0.004896500002359971,
+          "uci": "a2a3",
+          "san": "a3"
+        },
+        {
+          "ply": 4,
+          "color": "black",
+          "seconds": 3.0099780000018654,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": -0.00942491670594081,
+          "uci": "b4e7",
+          "san": "Be7"
+        },
+        {
+          "ply": 5,
+          "color": "white",
+          "seconds": 0.004961999999068212,
+          "uci": "b1c3",
+          "san": "Nc3"
+        },
+        {
+          "ply": 6,
+          "color": "black",
+          "seconds": 3.2292011999961687,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": -0.027831897742134196,
+          "uci": "g8f6",
+          "san": "Nf6"
+        },
+        {
+          "ply": 7,
+          "color": "white",
+          "seconds": 0.005550699999730568,
+          "uci": "c1f4",
+          "san": "Bf4"
+        },
+        {
+          "ply": 8,
+          "color": "black",
+          "seconds": 2.17211369999859,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": -0.016521907575051006,
+          "uci": "d7d5",
+          "san": "d5"
+        }
+      ],
+      "id": "supervised__alphago__o000__l0",
+      "run_id": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573",
+      "started_at": "2026-11-20T09:40:29+00:00",
+      "ended_at": "2026-11-20T09:40:43+00:00",
+      "mode": "benchmark",
+      "pair": "supervised__alphago",
+      "opening_index": 0,
+      "leg": 0,
+      "seeds": {
+        "supervised": 568158102,
+        "alphago": 245819493
+      },
+      "max_plies": 8,
+      "configs": {
+        "white": {
+          "label": "supervised",
+          "id": "supervised",
+          "key": "supervised",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage4/best_lichess.pt"
+          }
+        },
+        "black": {
+          "label": "alphago",
+          "id": "alphago",
+          "key": "alphago",
+          "kwargs": {
+            "checkpoint_policy": "checkpoints/stage6/policy.pt",
+            "checkpoint_value": "checkpoints/stage6/value.pt",
+            "simulations": 100,
+            "rollout_weight": 0.5,
+            "max_rollout_depth": 15
+          }
+        }
+      }
+    },
+    {
+      "white": "alphago",
+      "black": "supervised",
+      "result": "1/2-1/2",
+      "reason": "max_plies_adjudication",
+      "error": "",
+      "moves": [
+        "f3e5",
+        "f5e4",
+        "a2a3",
+        "b4e7",
+        "b1c3",
+        "g8f6",
+        "c1f4",
+        "d7d5"
+      ],
+      "initial_fen": "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5",
+      "final_fen": "rnbqk2r/ppp1b1pp/5n2/3pN3/3PpB2/P1N5/1PP1KPPP/R2Q1B1R w kq - 0 9",
+      "white_seconds": 9.662657799999579,
+      "black_seconds": 0.01621970000269357,
+      "white_calls": 4,
+      "black_calls": 4,
+      "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "initial_moves": [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ],
+      "claim_draw": true,
+      "telemetry": [
+        {
+          "ply": 1,
+          "color": "white",
+          "seconds": 1.9218853000056697,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.033352457568875775,
+          "uci": "f3e5",
+          "san": "Nxe5"
+        },
+        {
+          "ply": 2,
+          "color": "black",
+          "seconds": 0.0033628000019234605,
+          "uci": "f5e4",
+          "san": "fxe4"
+        },
+        {
+          "ply": 3,
+          "color": "white",
+          "seconds": 1.747566400001233,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.011866769552627781,
+          "uci": "a2a3",
+          "san": "a3"
+        },
+        {
+          "ply": 4,
+          "color": "black",
+          "seconds": 0.002849299999070354,
+          "uci": "b4e7",
+          "san": "Be7"
+        },
+        {
+          "ply": 5,
+          "color": "white",
+          "seconds": 2.6545842999985325,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.007986552670265878,
+          "uci": "b1c3",
+          "san": "Nc3"
+        },
+        {
+          "ply": 6,
+          "color": "black",
+          "seconds": 0.004741400000057183,
+          "uci": "g8f6",
+          "san": "Nf6"
+        },
+        {
+          "ply": 7,
+          "color": "white",
+          "seconds": 3.3386217999941437,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": -0.006022025071616275,
+          "uci": "c1f4",
+          "san": "Bf4"
+        },
+        {
+          "ply": 8,
+          "color": "black",
+          "seconds": 0.005266200001642574,
+          "uci": "d7d5",
+          "san": "d5"
+        }
+      ],
+      "id": "supervised__alphago__o000__l1",
+      "run_id": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573",
+      "started_at": "2026-11-20T09:40:43+00:00",
+      "ended_at": "2026-11-20T09:40:56+00:00",
+      "mode": "benchmark",
+      "pair": "supervised__alphago",
+      "opening_index": 0,
+      "leg": 1,
+      "seeds": {
+        "supervised": 568158102,
+        "alphago": 245819493
+      },
+      "max_plies": 8,
+      "configs": {
+        "white": {
+          "label": "alphago",
+          "id": "alphago",
+          "key": "alphago",
+          "kwargs": {
+            "checkpoint_policy": "checkpoints/stage6/policy.pt",
+            "checkpoint_value": "checkpoints/stage6/value.pt",
+            "simulations": 100,
+            "rollout_weight": 0.5,
+            "max_rollout_depth": 15
+          }
+        },
+        "black": {
+          "label": "supervised",
+          "id": "supervised",
+          "key": "supervised",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage4/best_lichess.pt"
+          }
+        }
+      }
+    },
+    {
+      "white": "supervised",
+      "black": "alphazero",
+      "result": "1/2-1/2",
+      "reason": "max_plies_adjudication",
+      "error": "",
+      "moves": [
+        "f3e5",
+        "b7b5",
+        "e4f5",
+        "c7c6",
+        "f5f6",
+        "c6c5",
+        "f6f7",
+        "e8e7"
+      ],
+      "initial_fen": "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5",
+      "final_fen": "rnbq2nr/p2pkPpp/8/1pp1N3/1b1P4/8/PPP1KPPP/RNBQ1B1R w - - 1 9",
+      "white_seconds": 0.022130799996375572,
+      "black_seconds": 9.36895380000351,
+      "white_calls": 4,
+      "black_calls": 4,
+      "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "initial_moves": [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ],
+      "claim_draw": true,
+      "telemetry": [
+        {
+          "ply": 1,
+          "color": "white",
+          "seconds": 0.006497599999420345,
+          "uci": "f3e5",
+          "san": "Nxe5"
+        },
+        {
+          "ply": 2,
+          "color": "black",
+          "seconds": 2.8160390999983065,
+          "simulation_budget": 100,
+          "uci": "b7b5",
+          "san": "b5"
+        },
+        {
+          "ply": 3,
+          "color": "white",
+          "seconds": 0.005116100001032464,
+          "uci": "e4f5",
+          "san": "exf5"
+        },
+        {
+          "ply": 4,
+          "color": "black",
+          "seconds": 2.714036400000623,
+          "simulation_budget": 100,
+          "uci": "c7c6",
+          "san": "c6"
+        },
+        {
+          "ply": 5,
+          "color": "white",
+          "seconds": 0.006303000001935288,
+          "uci": "f5f6",
+          "san": "f6"
+        },
+        {
+          "ply": 6,
+          "color": "black",
+          "seconds": 1.998706200000015,
+          "simulation_budget": 100,
+          "uci": "c6c5",
+          "san": "c5"
+        },
+        {
+          "ply": 7,
+          "color": "white",
+          "seconds": 0.004214099993987475,
+          "uci": "f6f7",
+          "san": "f7+"
+        },
+        {
+          "ply": 8,
+          "color": "black",
+          "seconds": 1.8401721000045654,
+          "simulation_budget": 100,
+          "uci": "e8e7",
+          "san": "Ke7"
+        }
+      ],
+      "id": "supervised__alphazero__o000__l0",
+      "run_id": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573",
+      "started_at": "2026-11-20T09:40:56+00:00",
+      "ended_at": "2026-11-20T09:41:09+00:00",
+      "mode": "benchmark",
+      "pair": "supervised__alphazero",
+      "opening_index": 0,
+      "leg": 0,
+      "seeds": {
+        "supervised": 568158102,
+        "alphazero": 1066437828
+      },
+      "max_plies": 8,
+      "configs": {
+        "white": {
+          "label": "supervised",
+          "id": "supervised",
+          "key": "supervised",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage4/best_lichess.pt"
+          }
+        },
+        "black": {
+          "label": "alphazero",
+          "id": "alphazero",
+          "key": "alphazero",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage7/best.pt",
+            "simulations": 100,
+            "temperature": 0.0,
+            "add_noise": false
+          }
+        }
+      }
+    },
+    {
+      "white": "alphazero",
+      "black": "supervised",
+      "result": "1/2-1/2",
+      "reason": "max_plies_adjudication",
+      "error": "",
+      "moves": [
+        "b1c3",
+        "f5e4",
+        "a1b1",
+        "g8f6",
+        "g2g4",
+        "e5d4",
+        "b2b3",
+        "b4c3"
+      ],
+      "initial_fen": "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5",
+      "final_fen": "rnbqk2r/pppp2pp/5n2/8/3pp1P1/1Pb2N2/P1P1KP1P/1RBQ1B1R w kq - 0 9",
+      "white_seconds": 6.241877199994633,
+      "black_seconds": 0.013243300003523473,
+      "white_calls": 4,
+      "black_calls": 4,
+      "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "initial_moves": [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ],
+      "claim_draw": true,
+      "telemetry": [
+        {
+          "ply": 1,
+          "color": "white",
+          "seconds": 1.4240692999956082,
+          "simulation_budget": 100,
+          "uci": "b1c3",
+          "san": "Nc3"
+        },
+        {
+          "ply": 2,
+          "color": "black",
+          "seconds": 0.003009800006111618,
+          "uci": "f5e4",
+          "san": "fxe4"
+        },
+        {
+          "ply": 3,
+          "color": "white",
+          "seconds": 1.6871825999987777,
+          "simulation_budget": 100,
+          "uci": "a1b1",
+          "san": "Rb1"
+        },
+        {
+          "ply": 4,
+          "color": "black",
+          "seconds": 0.0037203999963821843,
+          "uci": "g8f6",
+          "san": "Nf6"
+        },
+        {
+          "ply": 5,
+          "color": "white",
+          "seconds": 1.5798225000035018,
+          "simulation_budget": 100,
+          "uci": "g2g4",
+          "san": "g4"
+        },
+        {
+          "ply": 6,
+          "color": "black",
+          "seconds": 0.003564300001016818,
+          "uci": "e5d4",
+          "san": "exd4"
+        },
+        {
+          "ply": 7,
+          "color": "white",
+          "seconds": 1.5508027999967453,
+          "simulation_budget": 100,
+          "uci": "b2b3",
+          "san": "b3"
+        },
+        {
+          "ply": 8,
+          "color": "black",
+          "seconds": 0.0029488000000128523,
+          "uci": "b4c3",
+          "san": "Bxc3"
+        }
+      ],
+      "id": "supervised__alphazero__o000__l1",
+      "run_id": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573",
+      "started_at": "2026-11-20T09:41:09+00:00",
+      "ended_at": "2026-11-20T09:41:19+00:00",
+      "mode": "benchmark",
+      "pair": "supervised__alphazero",
+      "opening_index": 0,
+      "leg": 1,
+      "seeds": {
+        "supervised": 568158102,
+        "alphazero": 1066437828
+      },
+      "max_plies": 8,
+      "configs": {
+        "white": {
+          "label": "alphazero",
+          "id": "alphazero",
+          "key": "alphazero",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage7/best.pt",
+            "simulations": 100,
+            "temperature": 0.0,
+            "add_noise": false
+          }
+        },
+        "black": {
+          "label": "supervised",
+          "id": "supervised",
+          "key": "supervised",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage4/best_lichess.pt"
+          }
+        }
+      }
+    },
+    {
+      "white": "rl_policy",
+      "black": "alphago",
+      "result": "1/2-1/2",
+      "reason": "max_plies_adjudication",
+      "error": "",
+      "moves": [
+        "f3e5",
+        "f5e4",
+        "a2a3",
+        "b4e7",
+        "b1c3",
+        "g8f6",
+        "c1f4",
+        "d7d5"
+      ],
+      "initial_fen": "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5",
+      "final_fen": "rnbqk2r/ppp1b1pp/5n2/3pN3/3PpB2/P1N5/1PP1KPPP/R2Q1B1R w kq - 0 9",
+      "white_seconds": 0.013226199989730958,
+      "black_seconds": 7.355431999996654,
+      "white_calls": 4,
+      "black_calls": 4,
+      "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "initial_moves": [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ],
+      "claim_draw": true,
+      "telemetry": [
+        {
+          "ply": 1,
+          "color": "white",
+          "seconds": 0.0037346999961300753,
+          "uci": "f3e5",
+          "san": "Nxe5"
+        },
+        {
+          "ply": 2,
+          "color": "black",
+          "seconds": 1.7311240999988513,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": -0.022920648288664247,
+          "uci": "f5e4",
+          "san": "fxe4"
+        },
+        {
+          "ply": 3,
+          "color": "white",
+          "seconds": 0.002686299994820729,
+          "uci": "a2a3",
+          "san": "a3"
+        },
+        {
+          "ply": 4,
+          "color": "black",
+          "seconds": 1.7486957000000984,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": -0.00942491670594081,
+          "uci": "b4e7",
+          "san": "Be7"
+        },
+        {
+          "ply": 5,
+          "color": "white",
+          "seconds": 0.003402900001674425,
+          "uci": "b1c3",
+          "san": "Nc3"
+        },
+        {
+          "ply": 6,
+          "color": "black",
+          "seconds": 1.9324904999957653,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": -0.027831897742134196,
+          "uci": "g8f6",
+          "san": "Nf6"
+        },
+        {
+          "ply": 7,
+          "color": "white",
+          "seconds": 0.003402299997105729,
+          "uci": "c1f4",
+          "san": "Bf4"
+        },
+        {
+          "ply": 8,
+          "color": "black",
+          "seconds": 1.9431217000019387,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": -0.016521907575051006,
+          "uci": "d7d5",
+          "san": "d5"
+        }
+      ],
+      "id": "rl_policy__alphago__o000__l0",
+      "run_id": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573",
+      "started_at": "2026-11-20T09:41:19+00:00",
+      "ended_at": "2026-11-20T09:41:29+00:00",
+      "mode": "benchmark",
+      "pair": "rl_policy__alphago",
+      "opening_index": 0,
+      "leg": 0,
+      "seeds": {
+        "rl_policy": 1726123331,
+        "alphago": 245819493
+      },
+      "max_plies": 8,
+      "configs": {
+        "white": {
+          "label": "rl_policy",
+          "id": "rl_policy",
+          "key": "rl_policy",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage5/last.pt"
+          }
+        },
+        "black": {
+          "label": "alphago",
+          "id": "alphago",
+          "key": "alphago",
+          "kwargs": {
+            "checkpoint_policy": "checkpoints/stage6/policy.pt",
+            "checkpoint_value": "checkpoints/stage6/value.pt",
+            "simulations": 100,
+            "rollout_weight": 0.5,
+            "max_rollout_depth": 15
+          }
+        }
+      }
+    },
+    {
+      "white": "alphago",
+      "black": "rl_policy",
+      "result": "1/2-1/2",
+      "reason": "max_plies_adjudication",
+      "error": "",
+      "moves": [
+        "f3e5",
+        "f5e4",
+        "a2a3",
+        "b4e7",
+        "b1c3",
+        "g8f6",
+        "c1f4",
+        "d7d5"
+      ],
+      "initial_fen": "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5",
+      "final_fen": "rnbqk2r/ppp1b1pp/5n2/3pN3/3PpB2/P1N5/1PP1KPPP/R2Q1B1R w kq - 0 9",
+      "white_seconds": 9.288942200000747,
+      "black_seconds": 0.014205600011337083,
+      "white_calls": 4,
+      "black_calls": 4,
+      "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "initial_moves": [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ],
+      "claim_draw": true,
+      "telemetry": [
+        {
+          "ply": 1,
+          "color": "white",
+          "seconds": 1.7399397999979556,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.033352457568875775,
+          "uci": "f3e5",
+          "san": "Nxe5"
+        },
+        {
+          "ply": 2,
+          "color": "black",
+          "seconds": 0.002806700002111029,
+          "uci": "f5e4",
+          "san": "fxe4"
+        },
+        {
+          "ply": 3,
+          "color": "white",
+          "seconds": 1.8015007000067271,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.011866769552627781,
+          "uci": "a2a3",
+          "san": "a3"
+        },
+        {
+          "ply": 4,
+          "color": "black",
+          "seconds": 0.0025946000023395754,
+          "uci": "b4e7",
+          "san": "Be7"
+        },
+        {
+          "ply": 5,
+          "color": "white",
+          "seconds": 2.85578600000008,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.007986552670265878,
+          "uci": "b1c3",
+          "san": "Nc3"
+        },
+        {
+          "ply": 6,
+          "color": "black",
+          "seconds": 0.004546300006040838,
+          "uci": "g8f6",
+          "san": "Nf6"
+        },
+        {
+          "ply": 7,
+          "color": "white",
+          "seconds": 2.8917156999959843,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": -0.006022025071616275,
+          "uci": "c1f4",
+          "san": "Bf4"
+        },
+        {
+          "ply": 8,
+          "color": "black",
+          "seconds": 0.004258000000845641,
+          "uci": "d7d5",
+          "san": "d5"
+        }
+      ],
+      "id": "rl_policy__alphago__o000__l1",
+      "run_id": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573",
+      "started_at": "2026-11-20T09:41:29+00:00",
+      "ended_at": "2026-11-20T09:41:42+00:00",
+      "mode": "benchmark",
+      "pair": "rl_policy__alphago",
+      "opening_index": 0,
+      "leg": 1,
+      "seeds": {
+        "rl_policy": 1726123331,
+        "alphago": 245819493
+      },
+      "max_plies": 8,
+      "configs": {
+        "white": {
+          "label": "alphago",
+          "id": "alphago",
+          "key": "alphago",
+          "kwargs": {
+            "checkpoint_policy": "checkpoints/stage6/policy.pt",
+            "checkpoint_value": "checkpoints/stage6/value.pt",
+            "simulations": 100,
+            "rollout_weight": 0.5,
+            "max_rollout_depth": 15
+          }
+        },
+        "black": {
+          "label": "rl_policy",
+          "id": "rl_policy",
+          "key": "rl_policy",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage5/last.pt"
+          }
+        }
+      }
+    },
+    {
+      "white": "rl_policy",
+      "black": "alphazero",
+      "result": "1/2-1/2",
+      "reason": "max_plies_adjudication",
+      "error": "",
+      "moves": [
+        "f3e5",
+        "b7b5",
+        "e4f5",
+        "c7c6",
+        "f5f6",
+        "c6c5",
+        "f6f7",
+        "e8e7"
+      ],
+      "initial_fen": "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5",
+      "final_fen": "rnbq2nr/p2pkPpp/8/1pp1N3/1b1P4/8/PPP1KPPP/RNBQ1B1R w - - 1 9",
+      "white_seconds": 0.018814100010786206,
+      "black_seconds": 10.062606899991806,
+      "white_calls": 4,
+      "black_calls": 4,
+      "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "initial_moves": [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ],
+      "claim_draw": true,
+      "telemetry": [
+        {
+          "ply": 1,
+          "color": "white",
+          "seconds": 0.005755099999078084,
+          "uci": "f3e5",
+          "san": "Nxe5"
+        },
+        {
+          "ply": 2,
+          "color": "black",
+          "seconds": 2.515991699998267,
+          "simulation_budget": 100,
+          "uci": "b7b5",
+          "san": "b5"
+        },
+        {
+          "ply": 3,
+          "color": "white",
+          "seconds": 0.0027907000039704144,
+          "uci": "e4f5",
+          "san": "exf5"
+        },
+        {
+          "ply": 4,
+          "color": "black",
+          "seconds": 2.3252322999978787,
+          "simulation_budget": 100,
+          "uci": "c7c6",
+          "san": "c6"
+        },
+        {
+          "ply": 5,
+          "color": "white",
+          "seconds": 0.005038200004491955,
+          "uci": "f5f6",
+          "san": "f6"
+        },
+        {
+          "ply": 6,
+          "color": "black",
+          "seconds": 2.4648916000005556,
+          "simulation_budget": 100,
+          "uci": "c6c5",
+          "san": "c5"
+        },
+        {
+          "ply": 7,
+          "color": "white",
+          "seconds": 0.005230100003245752,
+          "uci": "f6f7",
+          "san": "f7+"
+        },
+        {
+          "ply": 8,
+          "color": "black",
+          "seconds": 2.756491299995105,
+          "simulation_budget": 100,
+          "uci": "e8e7",
+          "san": "Ke7"
+        }
+      ],
+      "id": "rl_policy__alphazero__o000__l0",
+      "run_id": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573",
+      "started_at": "2026-11-20T09:41:42+00:00",
+      "ended_at": "2026-11-20T09:41:55+00:00",
+      "mode": "benchmark",
+      "pair": "rl_policy__alphazero",
+      "opening_index": 0,
+      "leg": 0,
+      "seeds": {
+        "rl_policy": 1726123331,
+        "alphazero": 1066437828
+      },
+      "max_plies": 8,
+      "configs": {
+        "white": {
+          "label": "rl_policy",
+          "id": "rl_policy",
+          "key": "rl_policy",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage5/last.pt"
+          }
+        },
+        "black": {
+          "label": "alphazero",
+          "id": "alphazero",
+          "key": "alphazero",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage7/best.pt",
+            "simulations": 100,
+            "temperature": 0.0,
+            "add_noise": false
+          }
+        }
+      }
+    },
+    {
+      "white": "alphazero",
+      "black": "rl_policy",
+      "result": "1/2-1/2",
+      "reason": "max_plies_adjudication",
+      "error": "",
+      "moves": [
+        "b1c3",
+        "f5e4",
+        "a1b1",
+        "g8f6",
+        "g2g4",
+        "e5d4",
+        "b2b3",
+        "b4c3"
+      ],
+      "initial_fen": "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5",
+      "final_fen": "rnbqk2r/pppp2pp/5n2/8/3pp1P1/1Pb2N2/P1P1KP1P/1RBQ1B1R w kq - 0 9",
+      "white_seconds": 9.790282499998284,
+      "black_seconds": 0.019913999996788334,
+      "white_calls": 4,
+      "black_calls": 4,
+      "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "initial_moves": [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ],
+      "claim_draw": true,
+      "telemetry": [
+        {
+          "ply": 1,
+          "color": "white",
+          "seconds": 2.2518577000009827,
+          "simulation_budget": 100,
+          "uci": "b1c3",
+          "san": "Nc3"
+        },
+        {
+          "ply": 2,
+          "color": "black",
+          "seconds": 0.005185000001802109,
+          "uci": "f5e4",
+          "san": "fxe4"
+        },
+        {
+          "ply": 3,
+          "color": "white",
+          "seconds": 2.476350099997944,
+          "simulation_budget": 100,
+          "uci": "a1b1",
+          "san": "Rb1"
+        },
+        {
+          "ply": 4,
+          "color": "black",
+          "seconds": 0.004295699996873736,
+          "uci": "g8f6",
+          "san": "Nf6"
+        },
+        {
+          "ply": 5,
+          "color": "white",
+          "seconds": 2.735324599998421,
+          "simulation_budget": 100,
+          "uci": "g2g4",
+          "san": "g4"
+        },
+        {
+          "ply": 6,
+          "color": "black",
+          "seconds": 0.005570399996940978,
+          "uci": "e5d4",
+          "san": "exd4"
+        },
+        {
+          "ply": 7,
+          "color": "white",
+          "seconds": 2.326750100000936,
+          "simulation_budget": 100,
+          "uci": "b2b3",
+          "san": "b3"
+        },
+        {
+          "ply": 8,
+          "color": "black",
+          "seconds": 0.004862900001171511,
+          "uci": "b4c3",
+          "san": "Bxc3"
+        }
+      ],
+      "id": "rl_policy__alphazero__o000__l1",
+      "run_id": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573",
+      "started_at": "2026-11-20T09:41:55+00:00",
+      "ended_at": "2026-11-20T09:42:08+00:00",
+      "mode": "benchmark",
+      "pair": "rl_policy__alphazero",
+      "opening_index": 0,
+      "leg": 1,
+      "seeds": {
+        "rl_policy": 1726123331,
+        "alphazero": 1066437828
+      },
+      "max_plies": 8,
+      "configs": {
+        "white": {
+          "label": "alphazero",
+          "id": "alphazero",
+          "key": "alphazero",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage7/best.pt",
+            "simulations": 100,
+            "temperature": 0.0,
+            "add_noise": false
+          }
+        },
+        "black": {
+          "label": "rl_policy",
+          "id": "rl_policy",
+          "key": "rl_policy",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage5/last.pt"
+          }
+        }
+      }
+    },
+    {
+      "white": "alphago",
+      "black": "alphazero",
+      "result": "1/2-1/2",
+      "reason": "max_plies_adjudication",
+      "error": "",
+      "moves": [
+        "f3e5",
+        "b7b5",
+        "e4f5",
+        "c7c6",
+        "e5d3",
+        "d8e7",
+        "c1e3",
+        "c6c5"
+      ],
+      "initial_fen": "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5",
+      "final_fen": "rnb1k1nr/p2pq1pp/8/1pp2P2/1b1P4/3NB3/PPP1KPPP/RN1Q1B1R w kq - 0 9",
+      "white_seconds": 12.097816499997862,
+      "black_seconds": 10.248641000005591,
+      "white_calls": 4,
+      "black_calls": 4,
+      "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "initial_moves": [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ],
+      "claim_draw": true,
+      "telemetry": [
+        {
+          "ply": 1,
+          "color": "white",
+          "seconds": 2.7878054000029806,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.033352457568875775,
+          "uci": "f3e5",
+          "san": "Nxe5"
+        },
+        {
+          "ply": 2,
+          "color": "black",
+          "seconds": 2.5308049000013852,
+          "simulation_budget": 100,
+          "uci": "b7b5",
+          "san": "b5"
+        },
+        {
+          "ply": 3,
+          "color": "white",
+          "seconds": 3.398908700000902,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.08333385113338279,
+          "uci": "e4f5",
+          "san": "exf5"
+        },
+        {
+          "ply": 4,
+          "color": "black",
+          "seconds": 2.800152399999206,
+          "simulation_budget": 100,
+          "uci": "c7c6",
+          "san": "c6"
+        },
+        {
+          "ply": 5,
+          "color": "white",
+          "seconds": 3.4467632999949274,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.08244506672558599,
+          "uci": "e5d3",
+          "san": "Nd3"
+        },
+        {
+          "ply": 6,
+          "color": "black",
+          "seconds": 2.3446827000007033,
+          "simulation_budget": 100,
+          "uci": "d8e7",
+          "san": "Qe7+"
+        },
+        {
+          "ply": 7,
+          "color": "white",
+          "seconds": 2.4643390999990515,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.11036713822774231,
+          "uci": "c1e3",
+          "san": "Be3"
+        },
+        {
+          "ply": 8,
+          "color": "black",
+          "seconds": 2.5730010000042967,
+          "simulation_budget": 100,
+          "uci": "c6c5",
+          "san": "c5"
+        }
+      ],
+      "id": "alphago__alphazero__o000__l0",
+      "run_id": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573",
+      "started_at": "2026-11-20T09:42:08+00:00",
+      "ended_at": "2026-11-20T09:42:33+00:00",
+      "mode": "benchmark",
+      "pair": "alphago__alphazero",
+      "opening_index": 0,
+      "leg": 0,
+      "seeds": {
+        "alphago": 245819493,
+        "alphazero": 1066437828
+      },
+      "max_plies": 8,
+      "configs": {
+        "white": {
+          "label": "alphago",
+          "id": "alphago",
+          "key": "alphago",
+          "kwargs": {
+            "checkpoint_policy": "checkpoints/stage6/policy.pt",
+            "checkpoint_value": "checkpoints/stage6/value.pt",
+            "simulations": 100,
+            "rollout_weight": 0.5,
+            "max_rollout_depth": 15
+          }
+        },
+        "black": {
+          "label": "alphazero",
+          "id": "alphazero",
+          "key": "alphazero",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage7/best.pt",
+            "simulations": 100,
+            "temperature": 0.0,
+            "add_noise": false
+          }
+        }
+      }
+    },
+    {
+      "white": "alphazero",
+      "black": "alphago",
+      "result": "1/2-1/2",
+      "reason": "max_plies_adjudication",
+      "error": "",
+      "moves": [
+        "b1c3",
+        "f5e4",
+        "a1b1",
+        "e4f3",
+        "e2e3",
+        "g8f6",
+        "b2b3",
+        "f3g2"
+      ],
+      "initial_fen": "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5",
+      "final_fen": "rnbqk2r/pppp2pp/5n2/4p3/1b1P4/1PN1K3/P1P2PpP/1RBQ1B1R w kq - 0 9",
+      "white_seconds": 9.954051600005187,
+      "black_seconds": 11.527192800000194,
+      "white_calls": 4,
+      "black_calls": 4,
+      "root_fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+      "initial_moves": [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ],
+      "claim_draw": true,
+      "telemetry": [
+        {
+          "ply": 1,
+          "color": "white",
+          "seconds": 2.3786354000039864,
+          "simulation_budget": 100,
+          "uci": "b1c3",
+          "san": "Nc3"
+        },
+        {
+          "ply": 2,
+          "color": "black",
+          "seconds": 2.933346400001028,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.00786596344830526,
+          "uci": "f5e4",
+          "san": "fxe4"
+        },
+        {
+          "ply": 3,
+          "color": "white",
+          "seconds": 2.403732900005707,
+          "simulation_budget": 100,
+          "uci": "a1b1",
+          "san": "Rb1"
+        },
+        {
+          "ply": 4,
+          "color": "black",
+          "seconds": 2.5975741000002017,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.027569081244724004,
+          "uci": "e4f3",
+          "san": "exf3+"
+        },
+        {
+          "ply": 5,
+          "color": "white",
+          "seconds": 2.3385329999946407,
+          "simulation_budget": 100,
+          "uci": "e2e3",
+          "san": "Ke3"
+        },
+        {
+          "ply": 6,
+          "color": "black",
+          "seconds": 2.815295699998387,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.1045202350771145,
+          "uci": "g8f6",
+          "san": "Nf6"
+        },
+        {
+          "ply": 7,
+          "color": "white",
+          "seconds": 2.8331503000008524,
+          "simulation_budget": 100,
+          "uci": "b2b3",
+          "san": "b3"
+        },
+        {
+          "ply": 8,
+          "color": "black",
+          "seconds": 3.1809766000005766,
+          "simulation_budget": 100,
+          "root_visits": 100,
+          "root_value": 0.13966896649114344,
+          "uci": "f3g2",
+          "san": "fxg2"
+        }
+      ],
+      "id": "alphago__alphazero__o000__l1",
+      "run_id": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573",
+      "started_at": "2026-11-20T09:42:33+00:00",
+      "ended_at": "2026-11-20T09:42:58+00:00",
+      "mode": "benchmark",
+      "pair": "alphago__alphazero",
+      "opening_index": 0,
+      "leg": 1,
+      "seeds": {
+        "alphago": 245819493,
+        "alphazero": 1066437828
+      },
+      "max_plies": 8,
+      "configs": {
+        "white": {
+          "label": "alphazero",
+          "id": "alphazero",
+          "key": "alphazero",
+          "kwargs": {
+            "checkpoint": "checkpoints/stage7/best.pt",
+            "simulations": 100,
+            "temperature": 0.0,
+            "add_noise": false
+          }
+        },
+        "black": {
+          "label": "alphago",
+          "id": "alphago",
+          "key": "alphago",
+          "kwargs": {
+            "checkpoint_policy": "checkpoints/stage6/policy.pt",
+            "checkpoint_value": "checkpoints/stage6/value.pt",
+            "simulations": 100,
+            "rollout_weight": 0.5,
+            "max_rollout_depth": 15
+          }
+        }
+      }
+    }
+  ]
+}
