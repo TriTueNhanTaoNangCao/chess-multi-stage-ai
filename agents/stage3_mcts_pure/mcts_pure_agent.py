@@ -24,6 +24,7 @@ import chess
 from agents.base import BaseAgent
 from games.chess.board import ChessBoard
 from .node import MCTSNode
+from .heuristic import evaluate_cutoff_score
 
 PIECE_VALUES = {
     chess.PAWN: 1,
@@ -293,11 +294,10 @@ class PureMCTSAgent(BaseAgent):
                 return -1.0
             return 0.0
 
-        # Sau 30 nước đi chưa kết thúc ván:
-        # Tính chênh lệch điểm quân cờ: delta = material_white - material_black
-        # Chuẩn hóa điểm trả về theo công thức: delta / (|delta| + 10)
-        delta = self._evaluate_material_delta(sim_board)
-        return delta / (abs(delta) + 10.0)
+        # Sau 30 nước đi chưa kết thúc ván (cutoff):
+        # Đánh giá thế cờ đa thành phần: Vật chất, PST, Trung tâm, Phát triển, Tốt, Vua, Cơ động
+        # Chuẩn hóa về (-1.0, 1.0) qua evaluate_cutoff_score
+        return evaluate_cutoff_score(sim_board)
 
     @staticmethod
     def _evaluate_material_delta(board: chess.Board) -> float:
