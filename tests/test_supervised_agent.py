@@ -136,6 +136,21 @@ class TestSupervisedAgent(unittest.TestCase):
         with self.assertRaises(ValueError):
             agent.act(stalemate_board)
 
+    def test_act_respects_fifty_move_claim_policy(self):
+        fen = "7k/8/8/8/8/8/6R1/K7 w - - 100 51"
+        agent = SupervisedAgent(checkpoint=self.checkpoint_path)
+
+        playable = ChessBoard(fen, claim_draw=False)
+        self.assertFalse(playable.is_terminal())
+        self.assertIn(agent.act(playable), playable.legal_moves)
+
+        claimable = ChessBoard(fen, claim_draw=True)
+        outcome = claimable.outcome()
+        self.assertIsNotNone(outcome)
+        self.assertEqual(outcome.termination, chess.Termination.FIFTY_MOVES)
+        with self.assertRaisesRegex(ValueError, "terminal position"):
+            agent.act(claimable)
+
     def test_missing_or_corrupted_checkpoint(self):
         """Missing or corrupted checkpoint must raise error, never fallback silently to random."""
         # Missing checkpoint
