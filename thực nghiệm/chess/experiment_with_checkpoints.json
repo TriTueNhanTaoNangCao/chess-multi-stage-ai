@@ -84,7 +84,7 @@
       "id": "alphazero",
       "key": "alphazero",
       "kwargs": {
-        "checkpoint": "checkpoints/stage7/best.pt",
+        "checkpoint": "checkpoints/stage7/stage7/best.pt",
         "simulations": 100,
         "temperature": 0.0,
         "add_noise": false

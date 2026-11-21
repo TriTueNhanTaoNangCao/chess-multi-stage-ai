@@ -1,5 +1,28 @@
 # Benchmark toàn bộ bot cờ vua
 
+## Phương án còn 8 giờ
+
+Không sửa thông số của đợt `classic_200` đang chạy. Dừng bằng Ctrl+C, chờ export xong, rồi dùng runner rút gọn độc lập:
+
+```powershell
+python "thực nghiệm/chess/run_budget.py" plan --hours 7
+python "thực nghiệm/chess/run_budget.py" run --hours 7
+python "thực nghiệm/chess/run_budget.py" report
+python "thực nghiệm/chess/run_budget.py" verify
+```
+
+Mục tiêu rút gọn mặc định: 11 bot × 55 cặp × 10 ván/cặp = 550 ván, 5 Trắng/5 Đen cho mỗi bot ở từng cặp; chỉ dùng 5 khai cuộc đầu đã chốt. Depth, simulations, giới hạn 300 ply, seed và checkpoint giữ như `experiment_with_checkpoints.json`. Đây là thay đổi cỡ mẫu thực nghiệm, phải ghi trong báo cáo; không được gọi là hoàn thành kế hoạch 200 ván/cặp và không đủ căn cứ để khẳng định chắc chắn thứ hạng.
+
+Runner đọc đợt cổ điển ở chế độ chỉ đọc, kiểm tra code/environment/seed/khai cuộc/cấu hình tương thích trước khi tái sử dụng. Chỉ lấy những ván thuộc 5 khai cuộc đầu và có đủ hai màu. Bản sao tái sử dụng giữ `origin` với run ID và đường dẫn nguồn; không đổi/xóa dữ liệu gốc. Kết quả neural từ máy khác vẫn giữ báo cáo riêng, không âm thầm gộp số đo thời gian vào đợt local. Có thể chỉ định nguồn khác bằng `--reuse path`; nguồn không tương thích sẽ bị từ chối.
+
+Đợt mới lưu tại `results/reduced_8h/`. Runner chạy lần lượt hai ván đổi màu ở mỗi cặp, ưu tiên các cặp giữa nhóm cổ điển và học máy, rồi đi sang khai cuộc tiếp theo. Hai màu được ghi cùng một transaction. Nếu hết thời gian hoặc Ctrl+C giữa một cặp, phần cặp chưa đủ hai màu bị bỏ khỏi bộ rút gọn; không xử thua bot vì hết ngân sách toàn thí nghiệm.
+
+`--hours 7` là tối đa cho việc thu thập trong lần gọi, gồm thời gian chuẩn bị và giới hạn worker. Sau đó còn thời gian xuất báo cáo/đóng process, nên cần chừa khoảng một giờ trước hạn nộp. Không bảo đảm thu thập đủ 550 ván. `progress.json` báo `pairs_with_results`, `expected_pairs`, `completed_games`, `expected_games`, `reused_games` và `acceptance`. Khi chưa đủ, nhãn là `PARTIAL_REDUCED_NOT_COMPLETE`; `verify` trả mã lỗi nếu chưa đủ hoặc có lỗi bot. `report` vẫn xuất dữ liệu hợp lệ của các cặp đã hoàn thành.
+
+Có thể giảm thời gian cho phép, ví dụ `--hours 6.5`, hoặc thay cỡ mẫu trước khi bắt đầu bằng `--games-per-pair 4` (2 ván mỗi màu, 220 ván mục tiêu, cỡ mẫu rất nhỏ). Không thay cỡ mẫu trên cùng output đã tạo; dùng thư mục mới. Mỗi lần chạy lại cùng cấu hình sẽ resume và được cấp ngân sách thời gian mới theo `--hours` của lần gọi đó.
+
+Kết quả toàn bộ ván cũ 200/cặp tiếp tục nằm ở `classic_200`; kết quả rút gọn chỉ là một bộ con cân bằng màu cộng với ván mới, không thay thế các báo cáo cũ. Đã kiểm thử tái sử dụng đủ hai màu, từ chối môi trường khác, transaction hoàn tác và ngắt worker theo deadline; không thay đổi mã nguồn đang được runner gốc băm để resume.
+
 Bộ này độc lập với notebook ung thư vú ở thư mục cha. Chạy lệnh từ thư mục gốc `chess-multi-stage-ai`. Không chạy notebook hoặc dùng các `best_model_fold*.pt` của ung thư vú cho cờ vua.
 
 ## Cấu hình đã chuẩn bị
@@ -123,6 +146,29 @@ Khi chưa chơi ván nào ở một màu, tỷ lệ màu đó là `null`/ô tr�
 Dùng ID trong cấu hình, không phải tên class. Luôn dùng output riêng cho nhóm khác hoặc ngân sách khác. Lượt này là một thí nghiệm riêng, không tự cộng vào đợt 11.000 ván.
 
 ## Xác minh bộ runner
+
+### Rút gọn phần cổ điển còn thiếu và đấu chéo trong 9 giờ
+
+Nếu đã có kết quả nội bộ 4 bot checkpoint, dùng lịch sau để chỉ chạy nội bộ 7 bot cổ điển và 28 cặp đấu chéo. Không chạy lại 6 cặp nội bộ checkpoint.
+
+1. Nhấn Ctrl+C ở runner đang chạy, đợi terminal trở về dấu nhắc. Giữ nguyên thư mục kết quả cũ.
+2. Xem kế hoạch và chạy:
+
+```powershell
+python "thực nghiệm/chess/run_cross.py" plan --scope classic-cross --games-per-pair 10 --hours 9 --output results/remaining_classic_cross_9h_10
+python "thực nghiệm/chess/run_cross.py" run --scope classic-cross --games-per-pair 10 --hours 9 --output results/remaining_classic_cross_9h_10
+```
+
+Mục tiêu của bộ rút gọn là 49 cặp × 10 = 490 ván: 210 nội bộ cổ điển và 280 đấu chéo. Mỗi cặp có 5 ván mỗi màu, trên cùng 5 khai cuộc đầu của lịch gốc. Script tự chọn các cặp đổi màu hoàn chỉnh, tương thích code/config/môi trường từ `results/classic_200` và `results/reduced_9h_10` nếu có; loại bản trùng và giữ nguyên dữ liệu nguồn. Với mốc cũ 2.466/4.200, thường tái sử dụng được 130 ván trong bộ rút gọn, cần chạy thêm 80 cổ điển + 280 đấu chéo = 360 ván. Dòng `reusable` của lệnh `plan` cho con số thực tế.
+
+Lịch chạy phủ một khai cuộc cho các cặp trước rồi mới sang khai cuộc tiếp theo. Giữ nguyên depth, simulations và max_plies; không thay đổi thể thức giữa kết quả cũ và mới. Giới hạn 9 giờ tính từ mỗi lần gọi `run`; hết giờ dừng worker, xuất báo cáo và chỉ nhận các cặp đủ hai màu. Ván dở vì hết tổng ngân sách không bị tính thua. Không bảo đảm hoàn thành 490 ván trong thời hạn; thiếu thì báo `PARTIAL`. Xuất báo cáo có thể cần thêm thời gian sau khi ngừng đánh.
+
+```powershell
+python "thực nghiệm/chess/run_cross.py" report --output results/remaining_classic_cross_9h_10
+python "thực nghiệm/chess/run_cross.py" verify --output results/remaining_classic_cross_9h_10
+```
+
+Chạy hai lệnh này sau khi runner dừng. `verify` chỉ đạt khi đủ lịch rút gọn và không có lỗi bot. Kết quả ở output riêng gồm SQLite, PGN, JSON từng ván, bảng thắng/hòa/thua và phần trăm theo màu. Có thể tiếp tục kế hoạch 4.200 ván cũ bằng đúng lệnh và output cũ; bộ rút gọn không thay thế hoặc xóa các ván chính thức đã đánh. Thêm `--scope cross` và output riêng nếu chỉ muốn 28 cặp đấu chéo.
 
 ### Checkpoint đã bổ sung và nhóm chạy riêng
 

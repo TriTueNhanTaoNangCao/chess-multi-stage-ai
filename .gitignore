@@ -16,3 +16,9 @@ docs/*.docx
 docs/extracted_report_text.txt
 *.log
 
+# Large local benchmark runs; configs and runner remain versioned.
+/results/all_models*/
+
+# Local safety copies before updating from main.
+/.local-backups/
+

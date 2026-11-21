@@ -1,0 +1,13 @@
+{
+  "completed_games": 42,
+  "expected_games": 42,
+  "complete": true,
+  "clean": true,
+  "mode": "smoke",
+  "error_games": 0,
+  "timeout_games": 0,
+  "percent_unit": "0..100",
+  "paired_games_are_not_independent": true,
+  "checkpoint_sha256": {},
+  "fingerprint": "d62a2f08f1da7c6989978b5b0959afb2259ee3a9ab3049627924148ce4d3ea25"
+}

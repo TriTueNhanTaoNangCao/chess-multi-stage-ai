@@ -15,6 +15,8 @@ Mở **http://localhost:8501**. Hướng dẫn cấu hình, phát lại, xuất 
 
 Giao diện đen–vàng đồng, setup thu gọn phía trên, bàn cờ ở giữa với kéo thả quân; lượng giá và biên bản nước đi bố trí hai bên.
 
+**Benchmark tất cả bot:** bộ cấu hình 11 bot, 200 ván/cặp (11.000 ván), đổi màu, lưu và resume: [hướng dẫn thực nghiệm](thực%20nghiệm/chess/README.md). Bắt đầu bằng `python scripts/run_all_models.py plan` để xem lịch và checkpoint còn thiếu.
+
 ![Chess Lab — GUI Streamlit](results/streamlit_preview.png)
 
 ## 1. Phân công & tiến độ
