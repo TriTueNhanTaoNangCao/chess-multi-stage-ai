@@ -9,7 +9,12 @@ from pathlib import Path
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agents import AGENT_REGISTRY, DEFAULT_TOURNAMENT_AGENTS, build_agent
+from agents import (
+    AGENT_REGISTRY,
+    CHECKPOINT_REQUIRED_AGENTS,
+    DEFAULT_TOURNAMENT_AGENTS,
+    build_agent,
+)
 from agents.stage2_tree_search import MinimaxAgent
 from arena.evaluator import play_game
 
@@ -31,14 +36,22 @@ def run_tournament(agents, *, games=2, max_plies=300, output_dir="results", k=32
     names = [a.name for a in agents]
     if len(set(names)) != len(names):
         raise ValueError("Agent names must be unique")
+    from services.history import HistoryStore, new_record_id, utc_now
+    history = HistoryStore(Path(output_dir) / "history.sqlite3")
+    run_id = new_record_id()
     stats = {name: dict(agent=name, elo=1200.0, games=0, wins=0, draws=0,
                         losses=0, seconds=0.0, calls=0) for name in names}
     records = []
     for a, b in combinations(agents, 2):
         for i in range(games):
             white, black = (a, b) if i % 2 == 0 else (b, a)
+            started_at = utc_now()
             record = play_game(white, black, max_plies=max_plies)
-            records.append(record.to_dict())
+            saved = {**record.to_dict(), "id": new_record_id(), "run_id": run_id,
+                     "started_at": started_at, "ended_at": utc_now(), "mode": "arena",
+                     "source_config": metadata or {}, "max_plies": max_plies}
+            history.save(saved)
+            records.append(saved)
             score = {"1-0": 1, "0-1": 0, "1/2-1/2": 0.5}[record.result]
             ws, bs = stats[white.name], stats[black.name]
             ws["elo"], bs["elo"] = update_elo(ws["elo"], bs["elo"], score, k)
@@ -91,11 +104,11 @@ def build_cli_agents(specs, depth, seed):
         if key not in AGENT_REGISTRY:
             raise ValueError(f"Unknown agent specification: {spec}")
 
-        if key == "supervised":
+        if key in CHECKPOINT_REQUIRED_AGENTS or (key in ("alphazero", "alphago") and arg is not None and not arg.isdigit()):
             if not arg:
                 raise ValueError(
-                    "Supervised agent requires checkpoint path "
-                    f"(e.g. supervised:checkpoints/stage4/best_lichess.pt): {spec}"
+                    f"{key} agent requires checkpoint path "
+                    f"(e.g. {key}:checkpoints/stage5/last.pt): {spec}"
                 )
             agent = build_agent(key, checkpoint=arg, seed=seed+i)
             agents.append(agent)
@@ -129,7 +142,8 @@ def main(argv=None):
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--agents", nargs="+", default=DEFAULT_TOURNAMENT_AGENTS,
                         metavar="KEY[:SPEC]",
-                        help="Example: random supervised:checkpoints/stage4/best_lichess.pt")
+                        help=("Example: random supervised:checkpoints/stage4/best_lichess.pt "
+                              "rl_policy:checkpoints/stage5/last.pt"))
     parser.add_argument("--output-dir", default="results")
     args = parser.parse_args(argv)
     try:

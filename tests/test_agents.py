@@ -26,9 +26,15 @@ class AgentTests(unittest.TestCase):
 
     def test_registry_lists_all_agents(self):
         self.assertIn("supervised", AGENT_REGISTRY)
-        self.assertEqual(set(AGENT_REGISTRY.keys()), set(CLASSIC_AGENTS) | {"supervised"})
+        self.assertIn("rl_policy", AGENT_REGISTRY)
+        self.assertEqual(
+            set(AGENT_REGISTRY.keys()),
+            set(CLASSIC_AGENTS) | {"supervised", "rl_policy"},
+        )
         with self.assertRaises(ValueError):
             build_agent("supervised", 2, 7)
+        with self.assertRaises(ValueError):
+            build_agent("rl_policy", 2, 7)
 
     def test_mate_in_one_both_colors(self):
         position = chess.Board("7k/5Q2/6K1/8/8/8/8/8 w - - 0 1")

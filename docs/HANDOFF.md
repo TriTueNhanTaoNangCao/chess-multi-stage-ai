@@ -100,3 +100,53 @@ Chữ ký factory ở mục này là **thiết kế cần thực hiện khi có 
 - Lỗi reset một bot: `reset_forfeit`; cả hai cùng lỗi reset: `double_forfeit`, tính 0.5 điểm mỗi bên và ghi rõ lý do. Đây là adjudication của Arena, không phải hòa theo luật.
 - ms/move gồm clone state, gọi act và kiểm tra move; không gồm reset, render hoặc ghi file. Không so trực tiếp với latency neural forward riêng lẻ.
 - Nếu đổi heuristic/model/search budget, chạy benchmark mới; giữ cấu hình và cập nhật bảng README từ dữ liệu thực.
+
+## 6. Hai phiên bản Stage 5 được giữ
+
+- **B16 validation-selected:** `checkpoints/stage5/batch_comparison/b16/best.pt`,
+  SHA256 `1b3480e25cbf4b55cafeae85f0915a409993b7b2d08b068e35bb9cd056b244e0`.
+  Đây là Policy REINFORCE `baseline="zero"`, Value disabled; nạp đầy đủ bằng
+  `load_stage5_checkpoint`, nạp Policy-only để fresh-init bằng
+  `load_stage5_policy_checkpoint`, hoặc chơi argmax bằng `RLPolicyAgent`.
+  Validation cố định đạt score 51% (`13/76/11`), theo
+  `results/stage5/batch_comparison/comparison.json`.
+- **Paper Value:**
+  `checkpoints/stage5/stage5_alphago_value_2071_training_kaggle/best.pt`, SHA256
+  `93dd82049962b4e8f9c94927879a766ba10fc914f9474dda6a794b3f88ca07ca`;
+  nạp strict bằng `load_value_only_checkpoint`. Held-out test MSE là `0.158441`;
+  đối chứng luôn dự đoán zero là `0.157928`, nên kết quả này không chứng minh
+  Value tốt hơn đối chứng zero.
+- **Paper Policy:** `checkpoints/stage5/paper_frozen_2073/last.pt`, SHA256
+  `4d70697035064bfc4be2e505959bb070d4a3afd0c697390b78908605016e1832`.
+  Policy được fresh-init từ B16 rồi học với Paper Value frozen; nạp bằng
+  `load_stage5_checkpoint` hoặc chơi argmax bằng `RLPolicyAgent`. Validation đạt
+  score 50,5% (`11/79/10`); báo cáo lịch sử nằm trong
+  `results/stage5/paper_frozen_2073/comparison.json`.
+- 51% và 50,5% chỉ là score trên lịch validation cố định, không phải xác suất
+  thắng tổng quát hay Elo. Chưa có bằng chứng B16 hoặc Paper Policy mạnh hơn
+  Stage 4.
+- `scripts/stage5/stage5_alphago_value_train.py train` chỉ huấn luyện từ dataset và
+  manifest ba pha có sẵn; dùng vòng học/metric trong
+  `training/stage5/value_training.py`; CLI chịu trách
+  nhiệm đường dẫn, IO và provenance môi trường.
+  Cấu hình tái lập lần Kaggle: seed 2072, Adam 1e-4,
+  batch 128, tối đa 100 epoch, patience 10, chọn validation MSE thấp nhất.
+  Dữ liệu production Kaggle không có bản lưu local. Source tái lập hiện tại
+  được hoàn thiện sau thực nghiệm, không phải notebook Kaggle gốc và không bảo
+  đảm checkpoint tái tạo giống từng byte.
+- Subcommand `evaluate-test` là thao tác tường minh duy nhất mở test split.
+  Các nhánh Value one-ply, mate guard, `value_v2`, `frozen_ab` và runner cũ là
+  thí nghiệm riêng; đường dẫn hard-code của chúng không làm chúng thành artifact
+  bắt buộc của hai phiên bản trên.
+
+## 7. Lịch đánh giá cuối đề xuất (chưa chạy)
+
+- Mỗi Policy B16/Paper đấu riêng Random, Think3 one-ply, AlphaBeta depth 3 với
+  quiescence depth 6, và Pure MCTS 200 simulations, `c=1.414`, rollout depth 30.
+- Dùng đúng 50 openings theo thứ tự trong báo cáo batch; mỗi opening chơi hai
+  ván đổi màu, tức 100 ván/matchup và 800 ván tổng. `claim_draw=True`, giới hạn
+  300 ply sau opening, seed cố định theo game.
+- Chạy CPU; hai Policy chọn argmax. Lưu records đầy đủ và W/D/L/score theo cặp
+  tại `results/stage5/final_eval/<policy>_vs_<opponent>.json`, cùng
+  `results/stage5/final_eval/summary.json`. Đây là score đối đầu, không tự quy
+  đổi thành Elo nếu chưa chạy lịch round-robin phù hợp.

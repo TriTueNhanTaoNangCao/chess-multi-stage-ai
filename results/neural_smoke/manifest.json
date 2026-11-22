@@ -1,0 +1,81 @@
+{
+  "config": {
+    "schema_version": 1,
+    "seed": 42,
+    "games_per_pair": 2,
+    "max_plies": 8,
+    "claim_draw": true,
+    "device": "cpu",
+    "torch_threads": 2,
+    "move_timeout_seconds": 120,
+    "startup_timeout_seconds": 300,
+    "openings_file": "thực nghiệm/chess/openings_100.json",
+    "output_dir": "results/neural_200",
+    "agents": [
+      {
+        "id": "supervised",
+        "key": "supervised",
+        "kwargs": {
+          "checkpoint": "checkpoints/stage4/best_lichess.pt"
+        }
+      },
+      {
+        "id": "rl_policy",
+        "key": "rl_policy",
+        "kwargs": {
+          "checkpoint": "checkpoints/stage5/last.pt"
+        }
+      },
+      {
+        "id": "alphago",
+        "key": "alphago",
+        "kwargs": {
+          "checkpoint_policy": "checkpoints/stage6/policy.pt",
+          "checkpoint_value": "checkpoints/stage6/value.pt",
+          "simulations": 100,
+          "rollout_weight": 0.5,
+          "max_rollout_depth": 15
+        }
+      },
+      {
+        "id": "alphazero",
+        "key": "alphazero",
+        "kwargs": {
+          "checkpoint": "checkpoints/stage7/best.pt",
+          "simulations": 100,
+          "temperature": 0.0,
+          "add_noise": false
+        }
+      }
+    ],
+    "openings": [
+      [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ]
+    ],
+    "mode": "smoke"
+  },
+  "checkpoint_sha256": {
+    "supervised.checkpoint": "28e3c34619255796fc58a2006e7869a533812046a3b52366e8d8fe3925d7d464",
+    "rl_policy.checkpoint": "4d70697035064bfc4be2e505959bb070d4a3afd0c697390b78908605016e1832",
+    "alphago.checkpoint_policy": "4d70697035064bfc4be2e505959bb070d4a3afd0c697390b78908605016e1832",
+    "alphago.checkpoint_value": "93dd82049962b4e8f9c94927879a766ba10fc914f9474dda6a794b3f88ca07ca",
+    "alphazero.checkpoint": "6c8e5302898c2eb6889890aacf09845215a1d1f79814b91a14267302f74b4ca8"
+  },
+  "source_sha256": "0158d42ff58a5391387915a9e9c7ed439068cdc3813548f8ba69d74a19e1b0e2",
+  "environment": {
+    "chess": "1.11.2",
+    "numpy": "2.4.6",
+    "torch": "2.14.0",
+    "python": "3.11.9",
+    "platform": "Windows-10-10.0.26200-SP0"
+  },
+  "fingerprint": "e4a177b83ae00009c813bcf19c3d9c106915bf592e1515d9cace6285cbb8c573"
+}

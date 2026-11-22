@@ -24,6 +24,7 @@ import chess
 from agents.base import BaseAgent
 from games.chess.board import ChessBoard
 from .node import MCTSNode
+from .heuristic import evaluate_cutoff_score
 
 PIECE_VALUES = {
     chess.PAWN: 1,
@@ -49,14 +50,28 @@ class PureMCTSAgent(BaseAgent):
         name: Optional[str] = None,
         player_id: Optional[int] = None,
     ):
+        # 1. Validation cho simulations: chỉ nhận int, không nhận bool, giá trị >= 1
+        if isinstance(simulations, bool) or not isinstance(simulations, int):
+            raise TypeError("simulations phải là số nguyên (int), không chấp nhận bool hoặc kiểu khác")
+        if simulations < 1:
+            raise ValueError("simulations phải có giá trị >= 1")
+
+        # 2. Validation cho max_rollout_depth: chỉ nhận int, không nhận bool, giá trị >= 0
+        if isinstance(max_rollout_depth, bool) or not isinstance(max_rollout_depth, int):
+            raise TypeError("max_rollout_depth phải là số nguyên (int), không chấp nhận bool hoặc kiểu khác")
+        if max_rollout_depth < 0:
+            raise ValueError("max_rollout_depth phải có giá trị >= 0")
+
+        # 3. Validation cho c: nhận int/float, không nhận bool, phải hữu hạn và >= 0
+        if isinstance(c, bool) or not isinstance(c, (int, float)):
+            raise TypeError("c phải là số thực hoặc số nguyên (float hoặc int), không chấp nhận bool hoặc kiểu khác")
+        if not math.isfinite(c):
+            raise ValueError("c phải là số hữu hạn (không chấp nhận NaN hoặc vô cực)")
+        if c < 0:
+            raise ValueError("c phải có giá trị >= 0")
+
         name = name or f"PureMCTS ({simulations})"
         super().__init__(name=name, player_id=player_id)
-        if simulations < 1:
-            raise ValueError("simulations phải >= 1")
-        if c < 0:
-            raise ValueError("Hằng số thăm dò c phải >= 0")
-        if max_rollout_depth < 0:
-            raise ValueError("max_rollout_depth phải >= 0")
 
         self.simulations = simulations              # Tổng số lượt mô phỏng cho một nước đi
         self.c = c                                  # Hằng số cân bằng thăm dò UCB1 (mặc định sqrt(2) ~ 1.414)
@@ -89,19 +104,40 @@ class PureMCTSAgent(BaseAgent):
             board = wrapped
 
         if board.is_terminal():
+            self.root = None
             raise ValueError("Không thể ra quyết định trên bàn cờ đã kết thúc")
 
         legal_moves = board.get_legal_actions()
         if not legal_moves:
+            self.root = None
             raise ValueError("Không có nước đi hợp lệ nào trên bàn cờ")
 
-        # Xử lý nhanh: Nếu chỉ có duy nhất 1 nước đi hợp lệ, đi ngay mà không cần mô phỏng
+        # Xử lý nhanh: Nếu chỉ có duy nhất 1 nước đi hợp lệ, đi ngay mà không cần mô phỏng.
+        # Xóa self.root để không giữ cây và thống kê của lượt trước.
         if len(legal_moves) == 1:
+            self.root = None
             return legal_moves[0]
 
-        # Khởi tạo node gốc bằng bản sao sâu giữ nguyên lịch sử ván cờ (stack=True)
-        root = MCTSNode(board=board.clone())
-        self.root = root
+        # Kiểm tra và tái sử dụng cây tìm kiếm nếu tìm thấy node khớp với bàn cờ hiện tại
+        reusable_root = self._find_reusable_node(board)
+        if reusable_root is not None:
+            # Tái sử dụng node: đưa node đó thành self.root
+            if reusable_root is not self.root:
+                # Ngắt liên kết với tổ tiên cũ và dọn dẹp các nhánh anh em ngoài subtree được giữ
+                curr = reusable_root.parent
+                reusable_root.parent = None
+                reusable_root.move = None
+                while curr is not None:
+                    next_parent = curr.parent
+                    curr.children.clear()
+                    curr.parent = None
+                    curr = next_parent
+            self.root = reusable_root
+            root = self.root
+        else:
+            # Không tìm thấy trạng thái tương thích: khởi tạo cây mới
+            self.root = MCTSNode(board=board.clone())
+            root = self.root
 
         for _ in range(self.simulations):
             # 1. Selection (Lựa chọn)
@@ -125,6 +161,73 @@ class PureMCTSAgent(BaseAgent):
         )[0]
 
         return best_move
+
+    @staticmethod
+    def _get_board_state_key(board: ChessBoard) -> tuple:
+        """
+        Tạo khóa trạng thái đặc trưng duy nhất cho bàn cờ:
+            (initial_fen, move_stack_tuple, claim_draw)
+        Khóa này bảo toàn đầy đủ:
+        - FEN ban đầu (quyền nhập thành, en passant gốc).
+        - Toàn bộ chuỗi move_stack (thứ tự nước đi, luật 50 nước, lịch sử lặp lại 3 lần).
+        - Chính sách xin hòa claim_draw.
+        """
+        initial_fen = getattr(board, "_initial_fen", None)
+        if initial_fen is None:
+            try:
+                initial_fen = board.board.root().fen(en_passant="fen")
+            except Exception:
+                initial_fen = board.board.fen(en_passant="fen")
+        moves = tuple(board.board.move_stack)
+        claim_draw = getattr(board, "claim_draw", True)
+        return (initial_fen, moves, claim_draw)
+
+    def _find_reusable_node(self, board: ChessBoard) -> Optional[MCTSNode]:
+        """
+        Tìm kiếm node trong cây hiện tại (self.root và các hậu duệ) khớp hoàn toàn với board.
+        Hỗ trợ:
+        - Cùng trạng thái (0 nước đi).
+        - Sau 1 nước đi.
+        - Sau 2 nước đi thật (AI đi rồi đối thủ đi).
+        Nếu không tìm thấy node tương thích, trả về None để agent dựng cây mới.
+        """
+        if self.root is None:
+            return None
+
+        target_key = self._get_board_state_key(board)
+
+        # 1. Kiểm tra chính gốc hiện tại (cùng trạng thái)
+        if self._get_board_state_key(self.root.board) == target_key:
+            return self.root
+
+        # 2. Kiểm tra nhanh theo tiền tố chuỗi nước đi (move_stack)
+        root_key = self._get_board_state_key(self.root.board)
+        if root_key[0] == target_key[0] and root_key[2] == target_key[2]:
+            root_moves = root_key[1]
+            target_moves = target_key[1]
+            if len(target_moves) > len(root_moves) and target_moves[:len(root_moves)] == root_moves:
+                delta_moves = target_moves[len(root_moves):]
+                curr: Optional[MCTSNode] = self.root
+                for m in delta_moves:
+                    if curr is not None and m in curr.children:
+                        curr = curr.children[m]
+                    else:
+                        curr = None
+                        break
+                if curr is not None and self._get_board_state_key(curr.board) == target_key:
+                    return curr
+
+        # 3. Quét duyệt tìm kiếm theo độ sâu hậu duệ (độ sâu 1 và 2) để đảm bảo không bỏ sót
+        for child in self.root.children.values():
+            if self._get_board_state_key(child.board) == target_key:
+                return child
+
+        for child in self.root.children.values():
+            for grandchild in child.children.values():
+                if self._get_board_state_key(grandchild.board) == target_key:
+                    return grandchild
+
+        return None
 
     def _select(self, node: MCTSNode) -> MCTSNode:
         """Duyệt dọc theo cây đến khi tìm được một node chưa mở rộng hết hoặc thế cờ kết thúc."""
@@ -191,11 +294,10 @@ class PureMCTSAgent(BaseAgent):
                 return -1.0
             return 0.0
 
-        # Sau 30 nước đi chưa kết thúc ván:
-        # Tính chênh lệch điểm quân cờ: delta = material_white - material_black
-        # Chuẩn hóa điểm trả về theo công thức: delta / (|delta| + 10)
-        delta = self._evaluate_material_delta(sim_board)
-        return delta / (abs(delta) + 10.0)
+        # Sau 30 nước đi chưa kết thúc ván (cutoff):
+        # Đánh giá thế cờ đa thành phần: Vật chất, PST, Trung tâm, Phát triển, Tốt, Vua, Cơ động
+        # Chuẩn hóa về (-1.0, 1.0) qua evaluate_cutoff_score
+        return evaluate_cutoff_score(sim_board)
 
     @staticmethod
     def _evaluate_material_delta(board: chess.Board) -> float:

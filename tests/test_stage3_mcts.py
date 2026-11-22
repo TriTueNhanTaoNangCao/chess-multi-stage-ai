@@ -20,6 +20,17 @@ import chess
 
 from agents.stage3_mcts_pure.node import MCTSNode
 from agents.stage3_mcts_pure.mcts_pure_agent import PureMCTSAgent
+from agents.stage3_mcts_pure.heuristic import (
+    evaluate_cutoff_score,
+    evaluate_position_raw,
+    evaluate_material,
+    compute_game_phase,
+    evaluate_piece_square_and_center,
+    evaluate_development,
+    evaluate_pawns,
+    evaluate_king_safety_and_activity,
+    evaluate_mobility,
+)
 from games.chess.board import ChessBoard
 
 
@@ -223,9 +234,8 @@ class TestStage3MCTS(unittest.TestCase):
 
     def test_cutoff_material_delta_evaluation(self):
         """
-        Xác minh công thức tính điểm vật chất khi rollout chạm trần mà chưa kết thúc:
+        Xác minh công thức tính điểm vật chất:
             delta = material_white - material_black
-            score = delta / (|delta| + 10)
         Bảng giá trị: Tốt=1, Mã=3, Tượng=3, Xe=5, Hậu=9, Vua=0.
         """
         agent = PureMCTSAgent(simulations=5, max_rollout_depth=0, seed=42)
@@ -234,28 +244,25 @@ class TestStage3MCTS(unittest.TestCase):
         board_even = ChessBoard()
         node_even = MCTSNode(board=board_even)
         self.assertEqual(agent._rollout(node_even), 0.0)
+        self.assertEqual(agent._evaluate_material_delta(board_even.board), 0.0)
 
         # 2. Trắng hơn 1 Hậu (Đen mất Hậu d8): delta = +9
-        # score = 9 / (|9| + 10) = 9/19
         board_queen = ChessBoard("rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
         node_queen = MCTSNode(board=board_queen)
-        expected_queen = 9.0 / (9.0 + 10.0)
-        self.assertAlmostEqual(agent._rollout(node_queen), expected_queen)
+        self.assertEqual(agent._evaluate_material_delta(board_queen.board), 9.0)
+        self.assertGreater(agent._rollout(node_queen), 0.4)
 
         # 3. Đen hơn 1 Xe (Trắng mất Xe a1): delta = -5
-        # score = -5 / (|-5| + 10) = -5/15 = -1/3
         board_rook = ChessBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/1NBQKBNR w Kkq - 0 1")
         node_rook = MCTSNode(board=board_rook)
-        expected_rook = -5.0 / (5.0 + 10.0)
-        self.assertAlmostEqual(agent._rollout(node_rook), expected_rook)
+        self.assertEqual(agent._evaluate_material_delta(board_rook.board), -5.0)
+        self.assertLess(agent._rollout(node_rook), -0.2)
 
         # 4. Trắng hơn 1 Tốt (Đen mất Tốt h7): delta = +1
-        # score = 1 / (|1| + 10) = 1/11
         board_pawn = ChessBoard("rnbqkbnr/ppppppp1/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-        # Trên bàn cờ này Đen có 7 tốt, Trắng có 8 tốt -> delta = +1
         node_pawn = MCTSNode(board=board_pawn)
-        expected_pawn = 1.0 / (1.0 + 10.0)
-        self.assertAlmostEqual(agent._rollout(node_pawn), expected_pawn)
+        self.assertEqual(agent._evaluate_material_delta(board_pawn.board), 1.0)
+        self.assertGreater(agent._rollout(node_pawn), 0.0)
 
     def test_seed_determinism(self):
         """Hai agent có cùng seed phải tạo ra các nước đi và cây thống kê giống nhau hoàn toàn."""
@@ -455,6 +462,236 @@ class TestStage3MCTS(unittest.TestCase):
         self.assertIn(chosen_move, list(raw.legal_moves))
         # Bàn cờ gốc không bị biến đổi
         self.assertEqual(len(raw.move_stack), len(moves))
+
+    def test_constructor_simulations_validation(self):
+        """Xác minh kiểm tra kiểu và giá trị cho tham số simulations."""
+        # Hợp lệ: 1, 200
+        a1 = PureMCTSAgent(simulations=1)
+        self.assertEqual(a1.simulations, 1)
+        a200 = PureMCTSAgent(simulations=200)
+        self.assertEqual(a200.simulations, 200)
+
+        # Không hợp lệ về giá trị (ValueError): 0, -1
+        for val in [0, -1]:
+            with self.subTest(val=val):
+                with self.assertRaises(ValueError):
+                    PureMCTSAgent(simulations=val)
+
+        # Không hợp lệ về kiểu (TypeError): 1.5, True, False, "200", None, NaN, vô cực
+        for invalid_type in [1.5, True, False, "200", None, float("nan"), float("inf"), float("-inf")]:
+            with self.subTest(invalid_type=invalid_type):
+                with self.assertRaises(TypeError):
+                    PureMCTSAgent(simulations=invalid_type)
+
+    def test_constructor_max_rollout_depth_validation(self):
+        """Xác minh kiểm tra kiểu và giá trị cho tham số max_rollout_depth."""
+        # Hợp lệ: 0, 1, 30
+        for depth in [0, 1, 30]:
+            with self.subTest(depth=depth):
+                agent = PureMCTSAgent(max_rollout_depth=depth)
+                self.assertEqual(agent.max_rollout_depth, depth)
+
+        # Không hợp lệ về giá trị (ValueError): -1
+        for val in [-1]:
+            with self.subTest(val=val):
+                with self.assertRaises(ValueError):
+                    PureMCTSAgent(max_rollout_depth=val)
+
+        # Không hợp lệ về kiểu (TypeError): 1.5, True, False, "30", None, NaN, vô cực
+        for invalid_type in [1.5, True, False, "30", None, float("nan"), float("inf"), float("-inf")]:
+            with self.subTest(invalid_type=invalid_type):
+                with self.assertRaises(TypeError):
+                    PureMCTSAgent(max_rollout_depth=invalid_type)
+
+    def test_constructor_c_validation(self):
+        """Xác minh kiểm tra kiểu và giá trị cho tham số c (hệ số thăm dò UCB1)."""
+        # Hợp lệ: 0, 0.0, 1, 1.414
+        for valid_c in [0, 0.0, 1, 1.414]:
+            with self.subTest(valid_c=valid_c):
+                agent = PureMCTSAgent(c=valid_c)
+                self.assertEqual(agent.c, valid_c)
+
+        # Không hợp lệ về giá trị (ValueError): -1, NaN, +inf, -inf
+        for invalid_val in [-1, -0.5, float("nan"), float("inf"), float("-inf")]:
+            with self.subTest(invalid_val=invalid_val):
+                with self.assertRaises(ValueError):
+                    PureMCTSAgent(c=invalid_val)
+
+        # Không hợp lệ về kiểu (TypeError): True, False, "1.414", None
+        for invalid_type in [True, False, "1.414", None]:
+            with self.subTest(invalid_type=invalid_type):
+                with self.assertRaises(TypeError):
+                    PureMCTSAgent(c=invalid_type)
+
+    def test_valid_and_default_configs_act(self):
+        """
+        Xác nhận cấu hình mặc định và các cấu hình hợp lệ (c=0, c=0.0, c=1, max_rollout_depth=0)
+        vẫn thực thi act() bình thường, trả nước đi hợp lệ và không làm biến đổi bàn cờ đầu vào.
+        """
+        # Kiểm tra instance mặc định
+        default_agent = PureMCTSAgent()
+        self.assertEqual(default_agent.simulations, 200)
+        self.assertEqual(default_agent.c, 1.414)
+        self.assertEqual(default_agent.max_rollout_depth, 30)
+
+        test_configs = [
+            {"name": "low_sims_default_c_depth", "kwargs": {"simulations": 2, "seed": 42}},
+            {"name": "depth_0_material_only", "kwargs": {"simulations": 2, "max_rollout_depth": 0, "seed": 42}},
+            {"name": "c_0_int", "kwargs": {"simulations": 2, "c": 0, "seed": 42}},
+            {"name": "c_0_float", "kwargs": {"simulations": 2, "c": 0.0, "seed": 42}},
+            {"name": "c_1_int", "kwargs": {"simulations": 2, "c": 1, "seed": 42}},
+            {"name": "c_1_414_float", "kwargs": {"simulations": 2, "c": 1.414, "seed": 42}},
+        ]
+
+        for cfg in test_configs:
+            with self.subTest(config=cfg["name"]):
+                board = ChessBoard()
+                fen_before = board.fen()
+                stack_before = list(board.board.move_stack)
+
+                agent = PureMCTSAgent(**cfg["kwargs"])
+                move = agent.act(board)
+
+                self.assertIn(move, board.legal_moves)
+                self.assertEqual(board.fen(), fen_before)
+                self.assertEqual(list(board.board.move_stack), stack_before)
+
+
+    def test_color_symmetry_and_board_immutability(self):
+        """
+        Đối xứng màu: Đánh giá thế cờ thô và chuẩn hóa trên board.mirror() phải đổi dấu chính xác.
+        Bàn cờ đầu vào và move_stack tuyệt đối không bị thay đổi.
+        """
+        fens = [
+            chess.STARTING_FEN,
+            "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+            "r1b1k2r/pppp1ppp/2n2q2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - 1 6",
+            "8/2k5/8/8/3P4/8/2K5/8 w - - 0 40",
+            "r4rk1/1pp2ppp/p1np1n2/4p3/2B1P3/2N1PN2/PPP3PP/R4RK1 w - - 0 12",
+        ]
+        for fen in fens:
+            board = chess.Board(fen)
+            fen_before = board.fen()
+            stack_before = list(board.move_stack)
+
+            raw = evaluate_position_raw(board)
+            norm = evaluate_cutoff_score(board)
+
+            self.assertEqual(board.fen(), fen_before)
+            self.assertEqual(list(board.move_stack), stack_before)
+
+            mirrored = board.mirror()
+            raw_mirrored = evaluate_position_raw(mirrored)
+            norm_mirrored = evaluate_cutoff_score(mirrored)
+
+            self.assertAlmostEqual(raw, -raw_mirrored, places=5)
+            self.assertAlmostEqual(norm, -norm_mirrored, places=5)
+
+    def test_material_dominance(self):
+        """Vật chất nhiều hơn phải làm điểm tốt hơn khi các yếu tố khác tương đương."""
+        board_even = chess.Board("8/4k3/8/8/8/8/4K3/8 w - - 0 1")
+        board_white_up_rook = chess.Board("8/4k3/8/8/8/8/4K3/R7 w - - 0 1")
+        board_black_up_rook = chess.Board("r7/4k3/8/8/8/8/4K3/8 w - - 0 1")
+
+        score_even = evaluate_position_raw(board_even)
+        score_white_up = evaluate_position_raw(board_white_up_rook)
+        score_black_up = evaluate_position_raw(board_black_up_rook)
+
+        self.assertAlmostEqual(score_even, 0.0, places=5)
+        self.assertGreater(score_white_up, 4.0)
+        self.assertLess(score_black_up, -4.0)
+        self.assertGreater(score_white_up, score_even)
+        self.assertLess(score_black_up, score_even)
+
+    def test_center_control_reward(self):
+        """Thế cờ có kiểm soát trung tâm tốt hơn (d4, e4, d5, e5) được cộng điểm nhỏ."""
+        board_center = chess.Board("rnbqkbnr/pppppppp/8/8/3PP3/8/PPP2PPP/RNBQKBNR w KQkq - 0 2")
+        board_flank = chess.Board("rnbqkbnr/pppppppp/8/8/8/P6P/1PPPPPP1/RNBQKBNR w KQkq - 0 2")
+
+        score_center = evaluate_position_raw(board_center)
+        score_flank = evaluate_position_raw(board_flank)
+
+        self.assertGreater(score_center, score_flank)
+
+    def test_minor_piece_development_in_opening(self):
+        """Mã và Tượng phát triển tốt trong khai cuộc phải được đánh giá cao hơn vị trí còn ở ô xuất phát."""
+        board_developed = chess.Board("rnbqkbnr/pppppppp/8/8/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2")
+        board_undeveloped = chess.Board("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1")
+
+        phase = compute_game_phase(board_developed)
+        self.assertGreaterEqual(phase, 0.85)
+
+        score_dev = evaluate_position_raw(board_developed)
+        score_undev = evaluate_position_raw(board_undeveloped)
+
+        self.assertGreater(score_dev, score_undev)
+
+        board_edge_knight = chess.Board("rnbqkbnr/pppppppp/8/8/4P3/7N/PPPP1PPP/RNBQKB1R b KQkq - 1 2")
+        dev_f3 = evaluate_development(board_developed, chess.WHITE, phase)
+        dev_h3 = evaluate_development(board_edge_knight, chess.WHITE, phase)
+        self.assertGreater(dev_f3, dev_h3)
+
+    def test_passed_pawn_and_advancement(self):
+        """Tốt thông tiến gần hàng phong cấp được đánh giá cao hơn tốt thông còn xa."""
+        board_rank4 = chess.Board("8/4k3/8/8/3P4/8/4K3/8 w - - 0 1")
+        board_rank6 = chess.Board("8/4k3/3P4/8/8/8/4K3/8 w - - 0 1")
+
+        phase = compute_game_phase(board_rank4)
+        pawn_score_rank4 = evaluate_pawns(board_rank4, chess.WHITE, phase)
+        pawn_score_rank6 = evaluate_pawns(board_rank6, chess.WHITE, phase)
+
+        self.assertGreater(pawn_score_rank6, pawn_score_rank4)
+
+    def test_isolated_and_doubled_pawns_penalized(self):
+        """Tốt cô lập và tốt chồng bị phạt đúng hướng."""
+        board_healthy = chess.Board("8/4k3/8/8/8/3PP3/4K3/8 w - - 0 1")
+        board_doubled = chess.Board("8/4k3/8/8/8/3P4/3P1K2/8 w - - 0 1")
+
+        phase = compute_game_phase(board_healthy)
+        score_healthy = evaluate_pawns(board_healthy, chess.WHITE, phase)
+        score_doubled = evaluate_pawns(board_doubled, chess.WHITE, phase)
+
+        self.assertGreater(score_healthy, score_doubled)
+
+    def test_king_safety_pawn_shield(self):
+        """Vua có lá chắn tốt và ít bị đe dọa được đánh giá an toàn hơn."""
+        board_castled_safe = chess.Board("r1bq1rk1/pppp1ppp/2n2n2/4p3/2B1P3/2N2N2/PPPP1PPP/R1BQ1RK1 w - - 6 6")
+        board_king_exposed = chess.Board("r1bq1rk1/pppp1ppp/2n2n2/4p3/2B1P3/2N2N2/PPPP1P2/R1BQ1RK1 w - - 6 6")
+
+        phase = compute_game_phase(board_castled_safe)
+        safety_safe = evaluate_king_safety_and_activity(board_castled_safe, chess.WHITE, phase)
+        safety_exposed = evaluate_king_safety_and_activity(board_king_exposed, chess.WHITE, phase)
+
+        self.assertGreater(safety_safe, safety_exposed)
+
+    def test_king_activity_in_endgame(self):
+        """Vua hoạt động ở tàn cuộc (tiến vào trung tâm) được đánh giá tốt hơn Vua thụ động ở góc."""
+        board_active_king = chess.Board("8/8/8/4k3/4K3/8/8/8 w - - 0 1")
+        board_passive_king = chess.Board("8/8/8/4k3/8/8/8/K7 w - - 0 1")
+
+        phase = compute_game_phase(board_active_king)
+        self.assertLess(phase, 0.3)
+
+        safety_active = evaluate_king_safety_and_activity(board_active_king, chess.WHITE, phase)
+        safety_passive = evaluate_king_safety_and_activity(board_passive_king, chess.WHITE, phase)
+
+        self.assertGreater(safety_active, safety_passive)
+
+    def test_normalized_score_bounds_and_finite(self):
+        """Điểm chuẩn hóa luôn hữu hạn và thuộc (-1.0, 1.0)."""
+        fens = [
+            chess.STARTING_FEN,
+            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+            "8/8/8/8/8/8/8/8 w - - 0 1",
+            "QQQQQQQQ/QQQQQQQQ/8/8/8/8/8/4K2k w - - 0 1",
+            "4K2k/8/8/8/8/8/qqqqqqqq/qqqqqqqq w - - 0 1",
+        ]
+        for fen in fens:
+            board = chess.Board(fen)
+            score = evaluate_cutoff_score(board)
+            self.assertTrue(math.isfinite(score))
+            self.assertGreater(score, -1.0)
+            self.assertLess(score, 1.0)
 
 
 if __name__ == "__main__":

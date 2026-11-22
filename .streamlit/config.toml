@@ -1,0 +1,37 @@
+[server]
+address = "localhost"
+headless = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+
+# Obsidian and champagne; all fonts remain local.
+[theme]
+base = "dark"
+primaryColor = "#C9A96E"
+backgroundColor = "#0C0E12"
+secondaryBackgroundColor = "#171A21"
+textColor = "#EAE6DD"
+borderColor = "#2C3039"
+linkColor = "#D8BA85"
+showWidgetBorder = true
+showSidebarBorder = false
+baseRadius = "10px"
+buttonRadius = "8px"
+font = "sans serif"
+baseFontSize = 14
+headingFontSizes = ["30px", "24px", "19px", "17px", "15px", "14px"]
+headingFontWeights = [600, 600, 600, 600, 600, 600]
+metricValueFontSize = "26px"
+paddingTop = "1rem"
+paddingBottom = "1.5rem"
+dataframeHeaderBackgroundColor = "#1C2028"
+dataframeBorderColor = "#292E37"
+chartCategoricalColors = ["#C9A96E", "#82A996", "#8E9CB7", "#C77973"]
+
+[theme.sidebar]
+backgroundColor = "#101319"
+secondaryBackgroundColor = "#1B1F27"
