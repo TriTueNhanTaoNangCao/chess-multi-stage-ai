@@ -167,7 +167,10 @@ def _is_trained(name: str, path: Path) -> tuple[bool, str]:
         if not ok:
             return False, "metrics không có policy_loss/value_loss (file tự tạo)"
         tc = payload.get("training_config") or {}
-        games = tc.get("num_iterations", 0) * tc.get("games_per_iteration", 0)
+        # v1 ghi num_iterations/games_per_iteration; v2 ghi iterations/games_per_iter
+        iters = tc.get("num_iterations") or tc.get("iterations") or 0
+        per_iter = tc.get("games_per_iteration") or tc.get("games_per_iter") or 0
+        games = iters * per_iter
         if games < 100:
             return False, f"chỉ {games} ván tự chơi (quy mô kiểm thử)"
         return True, f"có policy_loss/value_loss ({games} ván tự chơi)"
@@ -176,7 +179,7 @@ def _is_trained(name: str, path: Path) -> tuple[bool, str]:
     return bool(found), (f"có dấu vết huấn luyện: {', '.join(found)}" if found else "không có dấu vết huấn luyện (mạng khởi tạo ngẫu nhiên)")
 
 
-def verify_checkpoints(allow_untrained: bool = False, seed: int = 42) -> Dict[str, str]:
+def verify_checkpoints(allow_untrained: bool = False, seed: int = 42, az_checkpoint: str = "checkpoints/stage7/best.pt") -> Dict[str, str]:
     """Kiểm tra checkpoint tồn tại VÀ đã được huấn luyện. Không tạo file nào.
 
     Thiếu file hoặc file chưa huấn luyện: dừng chương trình, trừ khi có --allow-untrained
@@ -185,7 +188,7 @@ def verify_checkpoints(allow_untrained: bool = False, seed: int = 42) -> Dict[st
     targets = {
         "Stage 6 Policy": Path("checkpoints/stage6/policy.pt"),
         "Stage 6 Value": Path("checkpoints/stage6/value.pt"),
-        "Stage 7 AlphaZero": Path("checkpoints/stage7/best.pt"),
+        "Stage 7 AlphaZero": Path(az_checkpoint),
     }
     hashes: Dict[str, str] = {}
     problems: List[str] = []
@@ -367,6 +370,7 @@ def run_benchmark(
     allow_untrained: bool = False,
     output_dir: str = "results/stage6_vs_stage7",
     seed: int = 42,
+    az_checkpoint: str = "checkpoints/stage7/best.pt",
 ) -> Dict[str, Any]:
     """Chạy toàn bộ benchmark đối kháng trực tiếp và xuất kết quả."""
     actual_threads = threads if threads > 0 else (os.cpu_count() or 4)
@@ -374,7 +378,7 @@ def run_benchmark(
         torch.set_num_threads(actual_threads)
 
     # 1. Kiểm tra tính toàn vẹn của checkpoint
-    checkpoint_hashes = verify_checkpoints(allow_untrained=allow_untrained, seed=seed)
+    checkpoint_hashes = verify_checkpoints(allow_untrained=allow_untrained, seed=seed, az_checkpoint=az_checkpoint)
 
     out_path = Path(output_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -422,7 +426,10 @@ def run_benchmark(
 
         # Khởi tạo Agent với seed độc lập cho từng ván để triệt tiêu tính tất định
         agent_stage6 = build_agent("alphago", depth=1, seed=seed + i * 37, device=device)
-        agent_stage7 = build_agent("alphazero", depth=1, seed=seed + i * 37 + 13, device=device)
+        agent_stage7 = build_agent(
+            "alphazero", depth=1, seed=seed + i * 37 + 13, device=device,
+            checkpoint=str(az_checkpoint) if Path(az_checkpoint).is_file() else None,
+        )
 
         # Đồng bộ chính xác số mô phỏng cho cả Agent và MCTS Engine
         agent_stage6.simulations = simulations
@@ -603,6 +610,8 @@ def main():
     parser.add_argument("--allow-untrained", action="store_true", help="Cho phép chạy với mạng khởi tạo ngẫu nhiên nếu thiếu checkpoint")
     parser.add_argument("--output-dir", default="results/stage6_vs_stage7", help="Thư mục xuất file kết quả")
     parser.add_argument("--seed", type=int, default=42, help="Seed ngẫu nhiên (mặc định: 42)")
+    parser.add_argument("--az-checkpoint", default="checkpoints/stage7/best.pt",
+                        help="Checkpoint AlphaZero (mặc định: bản v1 checkpoints/stage7/best.pt)")
 
     args = parser.parse_args()
     run_benchmark(
@@ -615,6 +624,7 @@ def main():
         allow_untrained=args.allow_untrained,
         output_dir=args.output_dir,
         seed=args.seed,
+        az_checkpoint=args.az_checkpoint,
     )
 
 

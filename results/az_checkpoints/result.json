@@ -1,0 +1,18 @@
+{
+  "a": "checkpoints/stage7_v2/best.pt",
+  "b": "checkpoints/stage7/best.pt",
+  "sha256_a": "8aec76fe7b2cd7aac4c42cd55daee17754d54cea92565712bab302efe8948d13",
+  "sha256_b": "6c8e5302898c2eb6889890aacf09845215a1d1f79814b91a14267302f74b4ca8",
+  "games": 100,
+  "simulations": 30,
+  "max_plies": 300,
+  "a_wins": 50,
+  "draws": 50,
+  "a_losses": 0,
+  "a_score": 0.75,
+  "wilson95": [
+    0.6569555667827929,
+    0.8245477565380216
+  ],
+  "seconds": 5922.196257591248
+}
