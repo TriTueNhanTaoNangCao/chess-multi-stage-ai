@@ -126,7 +126,7 @@ class SupervisedAgent(BaseAgent):
 
         # 4. Construct legal action mask
         legal_mask = torch.zeros(NUM_ACTIONS, dtype=torch.bool, device=self.device)
-        legal_indices = list(ChessEncoder.legal_action_indices(board.board))
+        legal_indices = ChessEncoder.legal_action_indices(board)
         if not legal_indices:
             raise ValueError("No legal action indices extracted from board")
 
@@ -138,7 +138,7 @@ class SupervisedAgent(BaseAgent):
         best_action_idx = masked_logits.argmax().item()
 
         # 6. Decode into chess.Move
-        move = ChessEncoder.decode_move(best_action_idx, board.board)
+        move = ChessEncoder.decode_move(best_action_idx, board)
         if move is None or not board.is_legal(move):
             raise RuntimeError(f"SupervisedAgent produced invalid or illegal move: {move} (action_idx={best_action_idx})")
 
