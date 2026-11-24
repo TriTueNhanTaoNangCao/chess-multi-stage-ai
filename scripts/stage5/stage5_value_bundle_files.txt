@@ -1,9 +1,8 @@
-# Files copied into the Kaggle input bundle for the post-experiment pipeline.
-scripts/stage5/stage5_alphago_value_job.py
-scripts/stage5/stage5_value_pipeline.py
+# Files copied into the Kaggle input bundle for new 300k-based runs.
+# train_stage5.py creates B16, Value data, Value and Paper Policy in a fresh output root.
+scripts/stage5/train_stage5.py
 scripts/stage5/requirements-kaggle.txt
-checkpoints/stage4/best_lichess.pt
-checkpoints/stage5/batch_comparison/b16/best.pt
+checkpoints/stage4/stage4_policy.pt
 games/__init__.py
 games/base.py
 games/chess/__init__.py
@@ -19,11 +18,13 @@ scripts/stage5/stage5_value_io.py
 training/__init__.py
 training/dataset.py
 training/stage4_train_sl.py
+training/stage5_train_rl.py
 training/stage5/__init__.py
 training/stage5/_utils.py
 training/stage5/alphago_value_data.py
 training/stage5/checkpoint.py
 training/stage5/selfplay.py
 training/stage5/types.py
+training/stage5/trainer.py
 training/stage5/updates.py
 training/stage5/value_training.py
