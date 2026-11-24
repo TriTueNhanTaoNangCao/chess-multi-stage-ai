@@ -26,7 +26,7 @@ Sửa `experiment_cfg.json` nếu cần **trước khi chạy chính thức**. R
 
 | Bot | Đường dẫn mặc định |
 |---|---|
-| Supervised | `checkpoints/stage4/best_lichess.pt` |
+| Supervised | `checkpoints/stage4/stage4_policy.pt` |
 | RL Policy | `checkpoints/stage5/paper_frozen_2073/last.pt` |
 | AlphaGo Policy | `checkpoints/stage6/policy.pt` |
 | AlphaGo Value | `checkpoints/stage6/value.pt` |
