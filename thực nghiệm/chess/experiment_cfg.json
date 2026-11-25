@@ -59,14 +59,14 @@
       "id": "supervised",
       "key": "supervised",
       "kwargs": {
-        "checkpoint": "checkpoints/stage4/best_lichess.pt"
+        "checkpoint": "checkpoints/stage4/stage4_policy.pt"
       }
     },
     {
       "id": "rl_policy",
       "key": "rl_policy",
       "kwargs": {
-        "checkpoint": "checkpoints/stage5/paper_frozen_2073/last.pt"
+        "checkpoint": "checkpoints/stage5/stage5_8h/paper_policy/last.pt"
       }
     },
     {

@@ -269,21 +269,25 @@ Tensor 14 kênh **không đủ khôi phục toàn bộ luật**: thiếu quyền
 
 Đây là encoder đơn giản của dự án, **không phải đầy đủ biểu diễn lịch sử của AlphaZero gốc**. Tùng/Thái cần version hóa encoder và checkpoint nếu bổ sung history/castling planes; checkpoint từ encoder 18 kênh bản nháp không tương thích.
 
-### Stage 4 baseline: Lichess Elite
+### Stage 4: Policy 300k hiện hành và baseline lịch sử
 
-Baseline hiện tại dùng **Lichess Elite 02/2023**: reservoir sampling seed 42 lấy 10.000 ván, lọc còn 9.886 ván. Split theo ván train/validation/test là 7.908/988/990, tương ứng 672.839/83.808/85.364 mẫu. Dataset trên Kaggle lưu thành các mảng NPY để memory-map; truyền thư mục dataset bằng `--dataset_dir`, không hard-code Kaggle input root. Loader vẫn tương thích NPZ và chấp nhận một trong hai bố cục NPY:
+Checkpoint Stage 4 hiện hành duy nhất là **`checkpoints/stage4/stage4_policy.pt`**, được đổi tên từ `best_lichess_300k.pt`; SHA256 không đổi: `99ee0a6bcc2a2d80fa794bb90464ed2a68b57151622bdfff5388da976595073b`. Đây là CNN 14 kênh/4.672 actions, tương thích loader Stage 4 và khởi tạo Stage 5. Việc đổi tên không huấn luyện lại hoặc thay metadata checkpoint.
+
+Baseline **lịch sử** dùng **Lichess Elite 02/2023**: reservoir sampling seed 42 lấy 10.000 ván, lọc còn 9.886 ván. Split theo ván train/validation/test là 7.908/988/990, tương ứng 672.839/83.808/85.364 mẫu. Dataset trên Kaggle lưu thành các mảng NPY để memory-map; truyền thư mục dataset bằng `--dataset_dir`, không hard-code Kaggle input root. Loader vẫn tương thích NPZ và chấp nhận một trong hai bố cục NPY:
 
 ```text
 <dataset_dir>/train_states.npy, train_targets.npy, train_legal_masks.npy, ...
 <dataset_dir>/train/states.npy, train/targets.npy, train/legal_masks.npy, ...
 ```
 
-Checkpoint baseline local là `checkpoints/stage4/best_lichess.pt` (epoch 4). Kết quả test đã ghi nhận: loss 2,3255; Top-1 32,53%; Top-5 67,00%. Đây là kết quả lịch sử, không thay thế các report Carlsen/Arena cũ. Agent luôn yêu cầu checkpoint tường minh:
+Checkpoint baseline lịch sử `checkpoints/stage4/best_lichess.pt` (epoch 4) đã được gỡ khỏi local cùng bản sao upload. Kết quả test đã ghi nhận: loss 2,3255; Top-1 32,53%; Top-5 67,00%. Đây là kết quả lịch sử, không phải metric của bản 300k. Các runner 2071/2073 và kèo old–300k cần checkpoint 10k sẽ báo thiếu trọng số lịch sử. Agent chạy mới luôn yêu cầu checkpoint tường minh:
 
 ```powershell
-python main.py --agent supervised --checkpoint checkpoints/stage4/best_lichess.pt
-python -m arena.tournament --agents random supervised:checkpoints/stage4/best_lichess.pt --games 10
+python main.py --agent supervised --checkpoint checkpoints/stage4/stage4_policy.pt
+python -m arena.tournament --agents random supervised:checkpoints/stage4/stage4_policy.pt --games 10
 ```
+
+Kaggle: dùng tên `stage4_policy.pt` khi gắn Input hoặc tìm checkpoint trong notebook. `stage4_source.zip` ở root repo giữ cấu trúc source và checkpoint tại `checkpoints/stage4/stage4_policy.pt`; gói source trong `kaggle_stage4_inputs/` đi cùng bản checkpoint riêng cùng tên. Manifest upload hiện hành là `kaggle_stage4_inputs/input_manifest_stage4_policy.json`; `input_manifest.json` cũ được giữ nguyên như bằng chứng lịch sử. Với bundle Value, đặt SL tại `<bundle-root>/checkpoints/stage4/stage4_policy.pt`, chạy `stage5_value_pipeline.py collect` và truyền B16 tương ứng bằng `--rl-checkpoint`; job 2071 khóa hash cũ chỉ dành cho tái lập lịch sử.
 
 Quy ước `.pt`, metadata/config, dấu value, thứ tự Tùng bàn giao CNN/Value cho Thái và thiết kế nạp checkpoint vào factory được ghi tại [docs/HANDOFF.md](docs/HANDOFF.md). Bộ nạp checkpoint chỉ được tích hợp khi stage học máy có model thật; không công bố skeleton như bot đã huấn luyện.
 

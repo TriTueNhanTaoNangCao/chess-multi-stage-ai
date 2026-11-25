@@ -164,7 +164,7 @@ def main(argv=None):
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--agents", nargs="+", default=DEFAULT_TOURNAMENT_AGENTS,
                         metavar="KEY[:SPEC]",
-                        help=("Example: random supervised:checkpoints/stage4/best_lichess.pt "
+                        help=("Example: random supervised:checkpoints/stage4/stage4_policy.pt "
                               "rl_policy:checkpoints/stage5/last.pt"))
     parser.add_argument("--output-dir", default="results")
     args = parser.parse_args(argv)

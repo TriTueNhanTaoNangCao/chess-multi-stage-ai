@@ -155,6 +155,23 @@ def provenance(config):
                     hashes[f"{agent['id']}.{key}"] = file_hash(path)
     env = {name: version(name) for name in ("chess", "numpy", "torch")}
     env["python"], env["platform"] = platform.python_version(), platform.platform()
+    env["cpu"] = platform.processor() or None
+    try:
+        import psutil
+        env["cpu_cores_physical"] = psutil.cpu_count(logical=False)
+        env["cpu_cores_logical"] = psutil.cpu_count(logical=True)
+        env["ram_gb"] = round(psutil.virtual_memory().total / (2**30), 1)
+    except ImportError:
+        env["cpu_cores_physical"] = None
+        env["cpu_cores_logical"] = None
+        env["ram_gb"] = None
+    try:
+        import torch
+        env["gpu"] = torch.cuda.get_device_name(0) if torch.cuda.is_available() else None
+        env["cuda"] = torch.version.cuda
+    except Exception:
+        env["gpu"] = None
+        env["cuda"] = None
     frozen = dict(config=config, checkpoint_sha256=hashes, source_sha256=source_hash(), environment=env)
     frozen["fingerprint"] = digest(frozen)
     return frozen, missing

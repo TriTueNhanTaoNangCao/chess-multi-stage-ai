@@ -123,7 +123,7 @@ def main(argv=None):
         "--checkpoint",
         default=None,
         help=("Path to model checkpoint (required for supervised/rl_policy; "
-              "Stage 4 baseline: checkpoints/stage4/best_lichess.pt)"),
+              "Stage 4 baseline: checkpoints/stage4/stage4_policy.pt)"),
     )
     parser.add_argument("--ascii", action="store_true", help="ASCII pieces for terminals without chess glyphs")
     parser.add_argument("--watch", action="store_true", help="Watch bot vs bot in Pygame GUI without human player")
