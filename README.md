@@ -15,7 +15,33 @@ Mở **http://localhost:8501**. Hướng dẫn cấu hình, phát lại, xuất 
 
 Giao diện đen–vàng đồng, setup thu gọn phía trên, bàn cờ ở giữa với kéo thả quân; lượng giá và biên bản nước đi bố trí hai bên.
 
+**Benchmark tất cả bot:** bộ cấu hình 11 bot, 200 ván/cặp (11.000 ván), đổi màu, lưu và resume: [hướng dẫn thực nghiệm](thực%20nghiệm/chess/README.md). Bắt đầu bằng `python scripts/run_all_models.py plan` để xem lịch và checkpoint còn thiếu.
+
 ![Chess Lab — GUI Streamlit](results/streamlit_preview.png)
+
+## Giới hạn thời gian suy nghĩ mỗi nước (tùy chọn)
+
+Trong cấu hình từng bot trên Streamlit, bật **Giới hạn thời gian suy nghĩ** rồi nhập giây/nước (mặc định 10, có thể chọn 15). Có ở cả Bàn đấu và Giải đấu. Tắt tùy chọn thì gọi `act(board)` như trước, không tạo worker thời gian hoặc giữ/gửi kết quả tìm kiếm liên tục. Depth và simulations vẫn là trần; bot tính xong sớm sẽ đi ngay.
+
+Khi bật, kết quả tốt nhất được giữ trong RAM và cập nhật qua IPC, không ghi từng node/mô phỏng xuống ổ đĩa. Minimax/Alpha–Beta dùng độ sâu đã hoàn tất; MCTS/AlphaGo/AlphaZero chọn nhánh có nhiều lượt thăm nhất (hòa thì xét giá trị). Hết ngân sách sẽ dùng kết quả đã có; chưa có thì đi nước hợp lệ dự phòng, không xử thua vì hết thời gian suy nghĩ. Thống kê mỗi nước ghi ngân sách, thời gian thực tế, độ sâu/số mô phỏng, `time_exhausted`, `fallback_used`, `hard_stop`.
+
+Worker nạp model để dùng lại. Nếu một lần suy luận không trả về kịp, worker bị kết thúc và nạp lại trước lượt sau; thời gian nạp không tính vào đồng hồ suy nghĩ. Giới hạn tìm kiếm có chừa một khoảng IPC nhỏ để dừng chủ động; GUI làm mới theo nhịp và thao tác kết thúc process có thể thêm một ít thời gian hiển thị/điều phối.
+
+```powershell
+# Chơi terminal, giới hạn 10 giây mỗi nước AI
+python main.py --cli --agent alphabeta --depth 6 --move-time-limit 10
+
+# Arena terminal, 15 giây/nước cho cả hai bot, output riêng
+python -m arena.tournament --agents minimax:6 alphabeta:6 --games 2 --max-plies 100 --move-time-limit 15 --output-dir results/arena_timed_15s
+
+# Thử nhanh benchmark; chưa dùng để kết luận sức mạnh
+python scripts/run_all_models.py smoke --agents random alphabeta --move-time-limit 10 --output results/timed_smoke_10s
+python scripts/run_all_models.py verify --output results/timed_smoke_10s
+```
+
+Bỏ `--move-time-limit` để giữ chế độ thường, hoặc dùng cấu hình JSON có `move_time_limit_seconds` là số dương; bỏ trường/null là tắt. Cấu hình mẫu cho 11 bot: `thực nghiệm/chess/experiment_timed.json`.
+
+Kết quả cũ được giữ nguyên. Đợt chạy có ngân sách thời gian dùng thư mục mới, không trộn với các đợt trước. Mã nguồn thay đổi sẽ làm đổi fingerprint; runner vẫn từ chối resume sai phiên bản. Nếu cần chạy tiếp đúng đợt cũ, dùng lại phiên bản trước thay đổi tính năng này (`52fca94558a73579dd06d60bf3a99befd5acb017`) và môi trường/checkpoint cũ. Không sửa manifest cũ để bỏ qua kiểm tra.
 
 ## 1. Phân công & tiến độ
 

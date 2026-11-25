@@ -265,3 +265,6 @@ class AlphaGoAgent(BaseAgent):
     def reset(self) -> None:
         """Đặt lại trạng thái bộ tìm kiếm giữa các ván cờ."""
         self.mcts.reset()
+
+    def act_timed(self, board, limits):
+        return self.mcts.search_timed(board.clone(), limits)

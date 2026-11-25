@@ -1,5 +1,6 @@
 """Chess.com-style 3-column layout: Left (Setup & Eval), Center (Board), Right (Moves & Controls)."""
 import json
+from pathlib import Path
 
 import chess
 import streamlit as st
@@ -23,9 +24,9 @@ def needs_poll(controller):
     return controller.worker.pending or controller.agents[game.index] is not None
 
 
-def live_match():
+def live_match(*, tournament=False):
     polling = needs_poll(st.session_state.controller)
-    st.fragment(_live_match, run_every=0.5 if polling else None)(polling)
+    st.fragment(_live_match, run_every=0.5 if polling else None)(polling, tournament=tournament)
 
 
 def notation_rows(record):
@@ -86,19 +87,55 @@ def _left_setup_panel(controller, game):
 
         st.divider()
 
-        # 5. Live Position Evaluation
-        board = game.state.board if game else chess.Board()
-        evaluation = evaluate_board(board, check_terminal=False) / 100
-        cols_eval = st.columns(2, gap="small")
-        cols_eval[0].metric("Lượng giá", f"{evaluation:+.2f}")
-        cols_eval[1].metric("Lượt đi", len(game.moves) if game else 0)
-        st.caption("Dương: Trắng lợi · Âm: Đen lợi")
+        _position_analysis(game)
 
-        if game and game.telemetry:
-            last = game.telemetry[-1]
-            val = last.get("nodes_visited", last.get("root_visits"))
-            if val is not None:
-                st.caption(f"Tìm kiếm: {val:,} nodes/visits")
+
+def _position_analysis(game):
+    # 5. Live Position Evaluation
+    board = game.state.board if game else chess.Board()
+    evaluation = evaluate_board(board, check_terminal=False) / 100
+    cols_eval = st.columns(2, gap="small")
+    cols_eval[0].metric("Lượng giá", f"{evaluation:+.2f}")
+    cols_eval[1].metric("Lượt đi", len(game.moves) if game else 0)
+    st.caption("Dương: Trắng lợi · Âm: Đen lợi")
+
+    if game and game.telemetry:
+        last = game.telemetry[-1]
+        val = last.get("nodes_visited", last.get("root_visits"))
+        if val is not None:
+            st.caption(f"Tìm kiếm: {val:,} nodes/visits")
+
+
+def _left_tournament_panel(controller, game):
+    """Read the active match snapshot, never the editable tournament draft."""
+    with st.container(border=True, key="left_panel", gap="small"):
+        st.caption("THÔNG SỐ VÁN ĐẤU")
+        if game:
+            if controller.mode != "tournament":
+                st.caption("Ván lẻ đang mở. Chọn Bắt đầu giải phía trên để khởi tạo giải đấu.")
+            for index, color in enumerate(("Trắng", "Đen")):
+                config = controller.config_objects[index]
+                title = "Người chơi" if config.key == "human" else agent_title(config.key)
+                st.markdown(f"**{color} · {title}**")
+                if config.key in ("minimax", "alphabeta"):
+                    st.caption(f"Độ sâu: {config.depth}")
+                if config.key in ("mcts_pure", "alphago", "alphazero"):
+                    st.caption(f"Mô phỏng mỗi nước: {config.simulations}")
+                if config.key != "human":
+                    limit = config.move_time_limit_seconds
+                    st.caption(f"Tối đa {limit:g} giây/nước" if limit is not None else "Không giới hạn thời gian suy nghĩ")
+                    if config.key not in ("minimax", "alphabeta"):
+                        st.caption(f"Seed: {config.seed} · {config.device.upper()}")
+                    if config.checkpoint:
+                        st.caption(f"Checkpoint: {Path(config.checkpoint).name}")
+                    elif config.key in ("supervised", "rl_policy", "alphago", "alphazero"):
+                        st.caption("Chưa nạp checkpoint")
+            st.caption(f"Giới hạn ván: {game.max_plies} ply · Luân phiên đổi màu" if controller.mode == "tournament"
+                       else f"Giới hạn ván: {game.max_plies} ply")
+        else:
+            st.caption("Chọn hai bot và thể thức trên thanh thiết lập, rồi bấm Bắt đầu giải.")
+        st.divider()
+        _position_analysis(game)
 
 
 def _right_move_panel(controller, human):
@@ -172,7 +209,7 @@ def _right_move_panel(controller, human):
                 downloads(controller.record(), "live", disabled=needs_poll(controller))
 
 
-def _live_match(polling):
+def _live_match(polling, *, tournament=False):
     controller = st.session_state.controller
     try:
         controller.tick()
@@ -198,7 +235,10 @@ def _live_match(polling):
 
     # Column 1: Left Setup & Eval Panel
     with col_left:
-        _left_setup_panel(controller, game)
+        if tournament:
+            _left_tournament_panel(controller, game)
+        else:
+            _left_setup_panel(controller, game)
 
     # Column 2: Center Board Stage
     with col_center, st.container(key="board_stage", gap="small"):
@@ -218,6 +258,9 @@ def _live_match(polling):
                      else "Chờ click nước tiếp")
             status = f"{state} · {who}" + (" · Chiếu!" if board.is_check() else "")
             detail = f"LƯỢT {len(game.moves):02d}"
+            config = controller.config_objects[game.index]
+            if config.move_time_limit_seconds is not None:
+                detail += f" · TỐI ĐA {config.move_time_limit_seconds:g}s/NƯỚC"
 
         match_status(status, detail)
 
