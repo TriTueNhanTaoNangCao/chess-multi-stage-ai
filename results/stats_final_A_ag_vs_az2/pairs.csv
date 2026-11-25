@@ -1,0 +1,2 @@
+﻿pair,agent_a,agent_b,N,W,D,L,score,wilson_low,wilson_high,bootstrap_low,bootstrap_high,white_score,black_score,mean_plies,a_ms_mean,a_ms_p95,b_ms_mean,b_ms_p95,timeout_games,error_games,reasons
+alphago__alphazero_v2,alphago,alphazero_v2,200,164,35,1,0.9075,0.859312,0.940329,0.88,0.9325,0.92,0.895,77.6,812.218,1652.692,674.832,1420.859,0,0,checkmate:165; fifty_moves:2; stalemate:3; threefold_repetition:30

@@ -1,0 +1,2 @@
+﻿pair,agent_a,agent_b,N,W,D,L,score,wilson_low,wilson_high,bootstrap_low,bootstrap_high,white_score,black_score,mean_plies,a_ms_mean,a_ms_p95,b_ms_mean,b_ms_p95,timeout_games,error_games,reasons
+minimax__alphabeta,minimax,alphabeta,100,38,27,35,0.515,0.418318,0.610572,0.5,0.54,0.64,0.39,65.5,384.963,878.522,55.626,135.919,0,0,checkmate:73; threefold_repetition:27
