@@ -1,0 +1,4 @@
+﻿label,pair,seed,N,W,D,L,score,wilson_low,wilson_high,bootstrap_low,bootstrap_high,a_ms_mean,b_ms_mean
+L0_value_only,alphago_l0__alphazero_v2,42,100,66,34,0,0.83,0.74452,0.891064,0.78,0.875,470.334,515.007
+L05_hybrid,alphago__alphazero_v2,42,100,80,19,1,0.895,0.819642,0.941133,0.855,0.935,990.731,828.676
+L1_rollout_only,alphago_l1__alphazero_v2,42,100,78,21,1,0.885,0.807767,0.933748,0.84,0.925,1099.206,950.164
