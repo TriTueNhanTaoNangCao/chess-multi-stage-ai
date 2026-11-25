@@ -31,6 +31,16 @@ def build_default_tournament(depth=2, seed=42):
     return [build_agent(key, depth, seed+i) for i, key in enumerate(DEFAULT_TOURNAMENT_AGENTS)]
 
 def run_tournament(agents, *, games=2, max_plies=300, output_dir="results", k=32, metadata=None):
+    try:
+        return _run_tournament(agents, games=games, max_plies=max_plies, output_dir=output_dir, k=k, metadata=metadata)
+    finally:
+        for agent in agents:
+            close = getattr(agent, "close", None)
+            if close:
+                close()
+
+
+def _run_tournament(agents, *, games=2, max_plies=300, output_dir="results", k=32, metadata=None):
     if len(agents) < 2 or games < 2 or games % 2 or max_plies < 1 or k <= 0:
         raise ValueError("Use >=2 agents, an even games >=2, max_plies >=1, K >0")
     names = [a.name for a in agents]
@@ -89,9 +99,20 @@ def run_tournament(agents, *, games=2, max_plies=300, output_dir="results", k=32
     (output/"tournament_results.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     return payload
 
-def build_cli_agents(specs, depth, seed):
-    """KEY or KEY:DEPTH or KEY:CHECKPOINT; explicit depth only applies to search agents."""
+def build_cli_agents(specs, depth, seed, move_time_limit_seconds=None):
     agents = []
+    try:
+        return _build_cli_agents(specs, depth, seed, move_time_limit_seconds, agents)
+    except BaseException:
+        for agent in agents:
+            close = getattr(agent, "close", None)
+            if close:
+                close()
+        raise
+
+
+def _build_cli_agents(specs, depth, seed, move_time_limit_seconds, agents):
+    """KEY or KEY:DEPTH or KEY:CHECKPOINT; explicit depth only applies to search agents."""
     config = []
     if depth < 1:
         raise ValueError("--depth must be >=1")
@@ -110,7 +131,7 @@ def build_cli_agents(specs, depth, seed):
                     f"{key} agent requires checkpoint path "
                     f"(e.g. {key}:checkpoints/stage5/last.pt): {spec}"
                 )
-            agent = build_agent(key, checkpoint=arg, seed=seed+i)
+            agent = build_agent(key, checkpoint=arg, seed=seed+i, move_time_limit_seconds=move_time_limit_seconds)
             agents.append(agent)
             config.append({"key": key, "name": agent.name, "checkpoint": arg, "seed": seed+i})
             continue
@@ -126,11 +147,11 @@ def build_cli_agents(specs, depth, seed):
             if local_depth < 1:
                 raise ValueError(f"Depth must be >=1: {spec}")
 
-        agent = build_agent(key, local_depth, seed+i)
+        agent = build_agent(key, local_depth, seed+i, move_time_limit_seconds=move_time_limit_seconds)
         agents.append(agent)
         config.append({"key": key, "name": agent.name,
-                       "depth": local_depth if isinstance(agent, MinimaxAgent) else None,
-                       "seed": seed+i if not isinstance(agent, MinimaxAgent) else None})
+                       "depth": local_depth if issubclass(AGENT_REGISTRY[key], MinimaxAgent) else None,
+                       "seed": seed+i if not issubclass(AGENT_REGISTRY[key], MinimaxAgent) else None})
     return agents, config
 
 
@@ -138,6 +159,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--games", type=int, default=2, help="Even games per pair, alternating colors")
     parser.add_argument("--depth", type=int, default=2)
+    parser.add_argument("--move-time-limit", type=float, default=None, metavar="SECONDS")
     parser.add_argument("--max-plies", type=int, default=300)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--agents", nargs="+", default=DEFAULT_TOURNAMENT_AGENTS,
@@ -146,18 +168,26 @@ def main(argv=None):
                               "rl_policy:checkpoints/stage5/last.pt"))
     parser.add_argument("--output-dir", default="results")
     args = parser.parse_args(argv)
+    agents = []
     try:
         if args.games < 2 or args.games % 2:
             raise ValueError("--games must be an even integer >=2")
         if args.max_plies < 1:
             raise ValueError("--max-plies must be >=1")
-        agents, config = build_cli_agents(args.agents, args.depth, args.seed)
+        from agents.search_limits import validate_seconds
+        validate_seconds(args.move_time_limit)
+        agents, config = build_cli_agents(args.agents, args.depth, args.seed, args.move_time_limit)
         if len(agents) < 2 or len({agent.name for agent in agents}) != len(agents):
             raise ValueError("Use >=2 unique agents; compare depths with alphabeta:2 alphabeta:4")
     except ValueError as exc:
+        for agent in agents:
+            close = getattr(agent, "close", None)
+            if close:
+                close()
         parser.error(str(exc))
     result = run_tournament(agents, games=args.games, max_plies=args.max_plies,
                             output_dir=args.output_dir, metadata={"seed": args.seed, "depth": args.depth,
+                                                                 "move_time_limit_seconds": args.move_time_limit,
                                                                  "agents": config})
     for row in result["leaderboard"]:
         print(f'{row["agent"]:24} Elo {row["elo"]:.1f}  W/D/L {row["wins"]}/{row["draws"]}/{row["losses"]}')

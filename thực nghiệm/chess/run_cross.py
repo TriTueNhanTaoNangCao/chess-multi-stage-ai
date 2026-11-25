@@ -123,6 +123,7 @@ def main(argv=None):
     parser.add_argument("--config", default=str(Path(__file__).with_name("experiment_with_checkpoints.json")))
     parser.add_argument("--games-per-pair", type=int, default=10)
     parser.add_argument("--hours", type=float, default=9)
+    parser.add_argument("--move-time-limit", type=float, default=None, metavar="SECONDS")
     parser.add_argument("--scope", choices=("cross", "classic-cross"), default="classic-cross")
     parser.add_argument("--output", default="results/remaining_classic_cross_9h_10")
     parser.add_argument("--reuse", nargs="*", default=None)
@@ -141,6 +142,10 @@ def main(argv=None):
         raise ValueError("hours must be in (0,24]")
     deadline = time.monotonic() + args.hours * 3600
     config = budget.config_for_budget(args.config, args.games_per_pair)
+    if args.move_time_limit is not None:
+        from agents.search_limits import validate_seconds
+        validate_seconds(args.move_time_limit)
+        config["move_time_limit_seconds"] = args.move_time_limit
     config["pair_scope"] = CLASSIC_CROSS if args.scope == "classic-cross" else "classic_vs_neural_only"
     config["mode"] = "reduced_classic_and_cross" if args.scope == "classic-cross" else "reduced_cross_only"
     jobs = cross_jobs(config)
@@ -153,6 +158,8 @@ def main(argv=None):
     if sources is None:
         sources = [str(p) for p in (core.project_path("results/classic_200"), core.project_path("results/reduced_9h_10"))
                    if (p / "manifest.json").exists()]
+        if config.get("move_time_limit_seconds") is not None:
+            sources = []
     reusable = reuse_records(sources, frozen, jobs)
     internal = sum(j["white"]["key"] not in NEURAL and j["black"]["key"] not in NEURAL for j in jobs)
     print(f"Scope={args.scope}: {len(set(j['pair'] for j in jobs))} pairs, {len(jobs)} target games, {args.games_per_pair // 2} per color")

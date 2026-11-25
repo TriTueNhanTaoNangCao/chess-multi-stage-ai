@@ -191,3 +191,20 @@ Nhóm bốn bot có 6 cặp = 1.200 ván chính thức, không trùng 21 cặp c
 .\.venv\Scripts\python.exe -m pytest tests/test_all_models_benchmark.py tests/test_web_services.py tests/test_arena.py -q
 .\.venv\Scripts\ty.exe check scripts/run_all_models.py
 ```
+
+
+## Optional per-move time limits
+
+Use `--move-time-limit 10` (or 15) with `run_all_models.py`, `run_budget.py`, or `run_cross.py`. Alternatively use `experiment_timed.json`, which sets `move_time_limit_seconds` to 10 and points to the local trained checkpoints. Omit the field/flag or set the JSON field to null for the original unrestricted search. Depth/simulation caps remain in effect; fast agents return early.
+
+Timed search publishes its best-so-far recommendation in RAM. It does not write a history of search nodes to disk. At the deadline, use a completed depth (Minimax/Alpha-Beta) or a completed-simulation recommendation (MCTS); use a legal fallback if none exists. Reaching the think-time limit is not a timeout loss. Real bot errors and the original worker-health watchdog remain separate. Model startup/recovery is outside the move's think clock.
+
+Per-move JSON telemetry includes `time_limit_seconds`, `time_exhausted`, `fallback_used`, `hard_stop`, `completed_depth`, and `simulations_completed`. Read these alongside actual `seconds`; process shutdown/IPC and GUI refresh can add a small observable overhead. Timed AlphaZero is competitive robust-child selection; its existing unrestricted and training probability APIs are unchanged.
+
+Always use a new output directory for a changed budget. Timed budget/cross runs do not automatically import old unrestricted records. Explicit reuse validates source, environment, checkpoints, openings, and the time budget. Preserve all old results and fingerprints. To resume an old run frozen before this feature, use source revision `52fca94558a73579dd06d60bf3a99befd5acb017` with its original configuration/environment, rather than editing its manifest.
+
+```powershell
+python scripts/run_all_models.py smoke --config "thực nghiệm/chess/experiment_timed.json" --agents random alphabeta --output results/timed_smoke_10s
+python scripts/run_all_models.py verify --output results/timed_smoke_10s
+python "thực nghiệm/chess/run_cross.py" run --scope classic-cross --games-per-pair 10 --hours 9 --move-time-limit 10 --output results/classic_cross_timed_10s
+```

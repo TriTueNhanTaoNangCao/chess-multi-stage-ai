@@ -138,6 +138,55 @@ class AlphaGoMCTS:
         sum_powered = sum(powered.values())
         return {m: p / sum_powered for m, p in powered.items()}
 
+    def search_timed(self, board, limits):
+        from agents.search_limits import rollout_position
+
+        limits.check()
+        moves = board.get_legal_actions()
+        if len(moves) == 1:
+            limits.publish(moves[0], simulations_completed=0)
+            return moves[0]
+        root = AlphaGoNode(board=board.clone())
+        self.root = root
+        root.expand(self.policy_fn(root.board))
+        limits.check()
+        for completed in range(1, self.simulations + 1):
+            limits.check()
+            node, path = root, [root]
+            while node.is_expanded and not node.is_terminal() and node.children:
+                limits.check()
+                node = node.best_child(c_puct=self.c_puct, rng=self.rng)
+                path.append(node)
+            if not node.is_terminal() and not node.is_expanded:
+                node.expand(self.policy_fn(node.board))
+                limits.check()
+            if node.is_terminal():
+                value = float(node.board.get_result_relative() or 0.0)
+            else:
+                has_value = self.value_fn is not None and self.rollout_weight < 1.0
+                network_value = float(self.value_fn(node.board)) if has_value else 0.0
+                limits.check()
+                rollout_value = 0.0
+                if self.rollout_weight > 0:
+                    position = rollout_position(node.board, self.max_rollout_depth, self.rng, limits)
+                    outcome = position.outcome(claim_draw=node.board.claim_draw)
+                    if outcome:
+                        white = 0.0 if outcome.winner is None else (1.0 if outcome.winner else -1.0)
+                    else:
+                        delta = sum((len(position.pieces(pt, chess.WHITE)) - len(position.pieces(pt, chess.BLACK))) * val
+                                    for pt, val in MATERIAL_VALUES.items())
+                        white = delta / (abs(delta) + 10.0)
+                    rollout_value = white * node.board.current_player
+                value = ((1 - self.rollout_weight) * network_value + self.rollout_weight * rollout_value
+                         if has_value else rollout_value)
+            limits.check()
+            for current in reversed(path):
+                current.update(value)
+                value = -value
+            best = max(root.children, key=lambda m: (root.children[m].visits, -root.children[m].mean_value))
+            limits.publish(best, simulations_completed=completed, root_visits=root.visits)
+        return limits.best_move
+
     def _simulate_one_path(self, root: AlphaGoNode) -> None:
         """Thực hiện một đường đi trọn vẹn: Selection -> Expansion -> Evaluation -> Backprop."""
         # --- BƯỚC 1: SELECTION ---

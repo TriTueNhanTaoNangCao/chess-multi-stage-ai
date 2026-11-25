@@ -157,6 +157,9 @@ class AlphaZeroAgent(BaseAgent):
 
         return chosen_move
 
+    def act_timed(self, board, limits):
+        return self.mcts.search_timed(board.clone(), limits)
+
     def get_action_probs(
         self,
         board: ChessBoard,

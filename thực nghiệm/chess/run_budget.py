@@ -55,6 +55,8 @@ def choose_reuse(folder, target):
         if source[key] != target[key]:
             raise ValueError(f"Cannot reuse {folder}: {key} differs. Keep it as a separate report.")
     old, new = source["config"], target["config"]
+    if old.get("move_time_limit_seconds") != new.get("move_time_limit_seconds"):
+        raise ValueError("Cannot reuse a different per-move time limit")
     for key in ("seed", "max_plies", "claim_draw", "device", "torch_threads", "move_timeout_seconds"):
         if old[key] != new[key]:
             raise ValueError(f"Cannot reuse {folder}: {key} differs")
@@ -115,9 +117,9 @@ def run_game(config, job, deadline):
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise BudgetExpired()
-            per_step = config["startup_timeout_seconds"] if snapshot is None else config["move_timeout_seconds"]
+            per_step = core.worker_timeout(config, snapshot is None)
             if not receiver.poll(min(per_step, remaining)):
-                if time.monotonic() >= deadline:
+                if remaining <= per_step or time.monotonic() >= deadline:
                     raise BudgetExpired()
                 if snapshot is None or snapshot["reason"]:
                     raise RuntimeError("Worker startup/finalization timeout")
@@ -178,8 +180,9 @@ def main(argv=None):
     parser.add_argument("--config", default=str(Path(__file__).with_name("experiment_with_checkpoints.json")))
     parser.add_argument("--games-per-pair", type=int, default=10)
     parser.add_argument("--hours", type=float, default=7)
+    parser.add_argument("--move-time-limit", type=float, default=None, metavar="SECONDS")
     parser.add_argument("--output", default="results/reduced_8h")
-    parser.add_argument("--reuse", nargs="*", default=["results/classic_200"])
+    parser.add_argument("--reuse", nargs="*", default=None)
     args = parser.parse_args(argv)
     output = core.project_path(args.output)
     if args.command in ("report", "verify"):
@@ -195,9 +198,14 @@ def main(argv=None):
         raise ValueError("hours must be in (0,24]")
     deadline = time.monotonic() + args.hours * 3600
     config = config_for_budget(args.config, args.games_per_pair)
+    if args.move_time_limit is not None:
+        from agents.search_limits import validate_seconds
+        validate_seconds(args.move_time_limit)
+        config["move_time_limit_seconds"] = args.move_time_limit
     frozen, missing = frozen_manifest(config)
     reusable = []
-    for path in args.reuse:
+    sources = args.reuse if args.reuse is not None else ([] if config.get("move_time_limit_seconds") else ["results/classic_200"])
+    for path in sources:
         reusable.extend(choose_reuse(core.project_path(path), frozen))
     if len({r["id"] for r in reusable}) != len(reusable):
         raise ValueError("Reuse sources overlap; choose nonoverlapping sources")

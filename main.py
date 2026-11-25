@@ -22,8 +22,16 @@ def run_cli(args):
     board = ChessBoard(args.fen)
     ascii_only = args.ascii or needs_ascii(sys.stdout)
     if getattr(args, "watch", False):
-        white_bot = build_agent(args.agent, args.depth, args.seed, checkpoint=getattr(args, "checkpoint", None))
-        black_bot = build_agent(args.opponent, args.depth, args.seed + 1)
+        white_bot = build_agent(args.agent, args.depth, args.seed, checkpoint=getattr(args, "checkpoint", None),
+                                move_time_limit_seconds=getattr(args, "move_time_limit", None))
+        try:
+            black_bot = build_agent(args.opponent, args.depth, args.seed + 1,
+                                    move_time_limit_seconds=getattr(args, "move_time_limit", None))
+        except BaseException:
+            close = getattr(white_bot, "close", None)
+            if close:
+                close()
+            raise
         try:
             while True:
                 print(ChessRenderer.render(board.board, flipped=False,
@@ -36,6 +44,10 @@ def run_cli(args):
                 turn_str = "Trắng" if board.turn == chess.WHITE else "Đen"
                 started = perf_counter()
                 try:
+                    prepare = getattr(current_bot, "prepare", None)
+                    if prepare is not None:
+                        prepare()
+                        started = perf_counter()
                     move = current_bot.act(board.clone())
                     if not board.is_legal(move):
                         raise ValueError(f"Illegal action: {move!r}")
@@ -50,8 +62,14 @@ def run_cli(args):
         except (EOFError, KeyboardInterrupt):
             print("\nGoodbye.")
             return 0
+        finally:
+            for agent in (white_bot, black_bot):
+                close = getattr(agent, "close", None)
+                if close:
+                    close()
 
-    bot = build_agent(args.agent, args.depth, args.seed, checkpoint=getattr(args, "checkpoint", None))
+    bot = build_agent(args.agent, args.depth, args.seed, checkpoint=getattr(args, "checkpoint", None),
+                       move_time_limit_seconds=getattr(args, "move_time_limit", None))
     human = HumanAgent()
     human_color = args.side == "white"
     try:
@@ -67,6 +85,10 @@ def run_cli(args):
             else:
                 started = perf_counter()
                 try:
+                    prepare = getattr(bot, "prepare", None)
+                    if prepare is not None:
+                        prepare()
+                        started = perf_counter()
                     move = bot.act(board.clone())
                     if not board.is_legal(move):
                         raise ValueError(f"Illegal action: {move!r}")
@@ -81,6 +103,10 @@ def run_cli(args):
     except (EOFError, KeyboardInterrupt):
         print("\nGoodbye.")
         return 0
+    finally:
+        close = getattr(bot, "close", None)
+        if close:
+            close()
 
 
 def main(argv=None):
@@ -88,6 +114,8 @@ def main(argv=None):
     parser.add_argument("--cli", action="store_true")
     parser.add_argument("--agent", choices=AGENT_REGISTRY, default="alphabeta")
     parser.add_argument("--depth", type=int, default=3)
+    parser.add_argument("--move-time-limit", type=float, default=None, metavar="SECONDS",
+                        help="Optional maximum think time per AI move, e.g. 10 or 15")
     parser.add_argument("--side", choices=("white","black"), default="white")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--fen", default=None)
@@ -104,6 +132,11 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.depth < 1:
         parser.error("--depth must be >=1")
+    from agents.search_limits import validate_seconds
+    try:
+        validate_seconds(args.move_time_limit)
+    except ValueError as exc:
+        parser.error(str(exc))
     if args.agent in CHECKPOINT_REQUIRED_AGENTS and not args.checkpoint:
         parser.error(f"--checkpoint is required when using {args.agent} agent")
     try:
@@ -123,6 +156,7 @@ def main(argv=None):
             black_agent_key=args.opponent,
             move_delay=args.delay,
             checkpoint=args.checkpoint,
+            move_time_limit_seconds=args.move_time_limit,
         ).run()
         return 0
     ChessGUI(
@@ -132,6 +166,7 @@ def main(argv=None):
         seed=args.seed,
         board=initial_board,
         checkpoint=args.checkpoint,
+        move_time_limit_seconds=args.move_time_limit,
     ).run()
     return 0
 

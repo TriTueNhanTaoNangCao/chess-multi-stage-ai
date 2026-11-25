@@ -58,11 +58,22 @@ class GameController:
         # Validate everything before replacing a running match.
         board = ChessBoard(fen or None)
         configs = {"white": white.metadata(), "black": black.metadata()}
-        agents = [white.build(), black.build()]
+        agents = []
+        try:
+            agents.append(white.build())
+            agents.append(black.build())
+        except BaseException:
+            for agent in agents:
+                close = getattr(agent, "close", None)
+                if close:
+                    close()
+            raise
         session = GameSession(white.label, black.label, board=board, max_plies=max_plies)
         session.reset_agents(agents)
         if self.session and not self.session.finished:
             self.stop()
+        else:
+            self._close_agents()
         self.generation += 1
         self.agents = agents
         self.config_objects = (white, black)
@@ -78,6 +89,8 @@ class GameController:
         self.running, self.step_requested = True, False
         self.next_at = monotonic()
         self.save()
+        if self.session.finished:
+            self._close_agents()
 
     def record(self):
         if self.session is None:
@@ -103,6 +116,8 @@ class GameController:
             return False
         self.session.accept(chess.Move.from_uci(uci), human=True)
         self.save()
+        if self.session.finished:
+            self._close_agents()
         return True
 
     @property
@@ -125,6 +140,8 @@ class GameController:
                     self.step_requested = False
                     self.next_at = monotonic() + self.delay
                     self.save()
+                    if self.session.finished:
+                        self._close_agents()
         if self.session.finished:
             if self.schedule and self.running and not self.worker.pending and monotonic() >= self.next_at:
                 white, black = self.schedule[0]
@@ -148,6 +165,7 @@ class GameController:
         self.schedule.clear()
         self.running = self.step_requested = False
         self.generation += 1
+        self._close_agents()
         if self.session:
             self.session.abort()
             self.save()
@@ -156,6 +174,7 @@ class GameController:
         if self.session is None:
             return
         self.generation += 1
+        self._close_agents()
         self.session.resign(color)
         self.save()
 
@@ -180,7 +199,10 @@ class GameController:
             raise ValueError("Các bot trong giải phải có cấu hình khác nhau")
         # Validate all participants before starting the first game.
         for config in configs:
-            config.build()
+            checked = config.build()
+            close = getattr(checked, "close", None)
+            if close:
+                close()
         schedule = []
         for a, b in combinations(configs, 2):
             schedule.extend((a, b) if i % 2 == 0 else (b, a) for i in range(games))
@@ -189,3 +211,9 @@ class GameController:
         self.schedule = schedule
         self.schedule_total = len(schedule) + 1
         self.schedule_done = 0
+
+    def _close_agents(self):
+        for agent in self.agents:
+            close = getattr(agent, "close", None)
+            if close:
+                close()

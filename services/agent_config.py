@@ -17,6 +17,7 @@ class AgentConfig:
     checkpoint: str = ""
     checkpoint_value: str = ""
     device: str = "cpu"
+    move_time_limit_seconds: float | None = None
 
     @property
     def label(self):
@@ -31,6 +32,8 @@ class AgentConfig:
             detail += " · chưa huấn luyện"
         if self.key == "alphago" and self.checkpoint and not self.checkpoint_value:
             detail += " · value chưa huấn luyện"
+        if self.move_time_limit_seconds is not None:
+            detail += f" · ≤{self.move_time_limit_seconds:g}s/nước"
         return f"{self.key}{detail}"
 
     def metadata(self):
@@ -47,6 +50,8 @@ class AgentConfig:
                 data[field + "_sha256"] = digest.hexdigest()
         # Irrelevant form defaults must not split identical agents into variants.
         identity = {"key": self.key}
+        if self.move_time_limit_seconds is not None:
+            identity["move_time_limit_seconds"] = self.move_time_limit_seconds
         if self.key in ("minimax", "alphabeta"):
             identity["depth"] = self.depth
             identity.pop("seed", None)
@@ -60,6 +65,20 @@ class AgentConfig:
         return data
 
     def build(self):
+        from agents.search_limits import validate_seconds
+        validate_seconds(self.move_time_limit_seconds)
+        if self.key != "human" and self.move_time_limit_seconds is not None:
+            from services.search_worker import TimedAgent
+            agent = TimedAgent(("config", self), self.move_time_limit_seconds, name=self.label)
+            try:
+                agent.prepare()
+            except BaseException:
+                agent.close()
+                raise
+            return agent
+        return self._build_unlimited()
+
+    def _build_unlimited(self):
         if self.key == "human":
             return None
         if self.key not in AGENT_REGISTRY:

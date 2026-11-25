@@ -211,6 +211,39 @@ class AlphaZeroMCTS:
             val = -val
             curr = curr.parent
 
+    def search_timed(self, board, limits):
+        """Competitive best-so-far selection; training search remains unchanged."""
+        limits.check()
+        moves = board.get_legal_actions()
+        if len(moves) == 1:
+            limits.publish(moves[0], simulations_completed=0)
+            return moves[0]
+        root = AlphaZeroNode(board=board.clone())
+        priors, _ = self._predict(root.board)
+        limits.check()
+        root.expand(priors)
+        for completed in range(1, self.simulations + 1):
+            limits.check()
+            node = root
+            while node.is_expanded and not node.is_terminal:
+                limits.check()
+                _, node = node.select_child(c_puct=self.c_puct, rng=self.rng)
+            if node.is_terminal:
+                value = node.terminal_value() or 0.0
+            else:
+                priors, value = self._predict(node.board)
+                limits.check()
+                node.expand(priors)
+            limits.check()
+            current = node
+            while current is not None:
+                current.update(value)
+                value = -value
+                current = current.parent
+            best = max(root.children, key=lambda m: (root.children[m].visit_count, -root.children[m].mean_value))
+            limits.publish(best, simulations_completed=completed, root_visits=root.visit_count)
+        return limits.best_move
+
     def _compute_pi(self, root: AlphaZeroNode, temperature: float) -> Dict[chess.Move, float]:
         """Compute pi(a|s) based on visit counts and temperature tau."""
         if not root.children:

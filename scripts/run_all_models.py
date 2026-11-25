@@ -66,8 +66,11 @@ def load_config(path, selected=None, smoke=False):
     required = {"schema_version", "seed", "games_per_pair", "max_plies", "claim_draw", "device",
                 "torch_threads", "move_timeout_seconds", "startup_timeout_seconds", "openings_file",
                 "output_dir", "agents"}
-    if set(config) != required or config["schema_version"] != 1:
-        raise ValueError(f"Configuration keys must be exactly {sorted(required)}; schema_version=1")
+    optional = {"move_time_limit_seconds"}
+    if not required <= set(config) or set(config) - required - optional or config["schema_version"] != 1:
+        raise ValueError(f"Required keys: {sorted(required)}; optional: {sorted(optional)}; schema_version=1")
+    from agents.search_limits import validate_seconds
+    validate_seconds(config.get("move_time_limit_seconds"))
     for name in ("games_per_pair", "max_plies", "torch_threads", "move_timeout_seconds", "startup_timeout_seconds"):
         if type(config[name]) is not int or config[name] < 1:
             raise ValueError(f"{name} must be a positive integer")
@@ -157,7 +160,7 @@ def provenance(config):
     return frozen, missing
 
 
-def build_agent(spec, seed, device, claim_draw=True):
+def build_agent(spec, seed, device, claim_draw=True, *, move_time_limit_seconds=None, torch_threads=None):
     from agents import AGENT_REGISTRY
     kwargs = dict(spec["kwargs"])
     for key in list(kwargs):
@@ -187,12 +190,17 @@ def build_agent(spec, seed, device, claim_draw=True):
         kwargs["device"] = device
     if spec["key"] not in ("minimax", "alphabeta"):
         kwargs["seed"] = seed
+    if move_time_limit_seconds is not None:
+        from services.search_worker import TimedAgent
+        return TimedAgent(("registry", (spec["key"], kwargs)), move_time_limit_seconds,
+                          name=spec["id"], torch_threads=torch_threads)
     agent = AGENT_REGISTRY[spec["key"]](**kwargs)
     agent.name = spec["id"]
     return agent
 
 
 def _worker(connection, config, job, check_only=False):
+    agents = []
     try:
         import torch
         torch.set_num_threads(config["torch_threads"])
@@ -203,7 +211,9 @@ def _worker(connection, config, job, check_only=False):
             agent.reset()
             connection.send(("checked", job["id"]))
             return
-        agents = [build_agent(job[side], job["seeds"][job[side]["id"]], config["device"], config["claim_draw"])
+        agents = [build_agent(job[side], job["seeds"][job[side]["id"]], config["device"], config["claim_draw"],
+                              move_time_limit_seconds=config.get("move_time_limit_seconds"),
+                              torch_threads=config["torch_threads"])
                   for side in ("white", "black")]
         game = GameSession(agents[0].name, agents[1].name,
                            board=opening_board(job["opening"], config["claim_draw"]), max_plies=config["max_plies"])
@@ -216,6 +226,10 @@ def _worker(connection, config, job, check_only=False):
     except Exception as exc:
         connection.send(("error", f"{type(exc).__name__}: {exc}"))
     finally:
+        for agent in agents:
+            close = getattr(agent, "close", None)
+            if close:
+                close()
         connection.close()
 
 
@@ -233,6 +247,15 @@ def timeout_record(record, seconds):
     return record
 
 
+def worker_timeout(config, initial=False):
+    if initial:
+        return config["startup_timeout_seconds"]
+    seconds = config.get("move_time_limit_seconds")
+    # Model recovery follows a hard stop; its startup isn't think time.
+    return (max(config["move_timeout_seconds"], config["startup_timeout_seconds"] + seconds + 5)
+            if seconds is not None else config["move_timeout_seconds"])
+
+
 def isolated_job(config, job, check_only=False):
     context = mp.get_context("spawn")
     receiver, sender = context.Pipe(duplex=False)
@@ -242,7 +265,7 @@ def isolated_job(config, job, check_only=False):
     snapshot = None
     try:
         while True:
-            budget = config["startup_timeout_seconds"] if snapshot is None else config["move_timeout_seconds"]
+            budget = worker_timeout(config, snapshot is None)
             if not receiver.poll(budget):
                 if snapshot is None or snapshot["reason"]:
                     raise RuntimeError("Worker startup/finalization timeout; no completed game saved")
@@ -338,6 +361,18 @@ def validate_records(records, config, fingerprint, require_complete=False):
         telemetry = record["telemetry"]
         if [entry["uci"] for entry in telemetry if "uci" in entry] != record["moves"]:
             raise ValueError(f"Move telemetry mismatch: {key}")
+        time_limit = config.get("move_time_limit_seconds")
+        if time_limit is not None:
+            for entry in telemetry:
+                if "uci" not in entry:
+                    continue
+                if entry.get("time_limit_seconds") != time_limit:
+                    raise ValueError(f"Move time limit telemetry mismatch: {key}")
+                if any(type(entry.get(field)) is not bool for field in ("time_exhausted", "fallback_used", "hard_stop")):
+                    raise ValueError(f"Invalid timed search flags: {key}")
+                if any(type(entry.get(field)) is not int or entry[field] < 0
+                       for field in ("completed_depth", "simulations_completed")):
+                    raise ValueError(f"Invalid timed search counters: {key}")
         for side in ("white", "black"):
             entries = [entry for entry in telemetry if entry["color"] == side]
             if record[side + "_calls"] != len(entries) or abs(record[side + "_seconds"] - sum(e["seconds"] for e in entries)) > 1e-6:
@@ -497,6 +532,8 @@ def run(config, output, limit=None):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=("plan", "check", "smoke", "run", "report", "verify"))
+    parser.add_argument("--move-time-limit", type=float, default=None, metavar="SECONDS",
+                        help="Optional think-time ceiling; use best-so-far when exhausted")
     parser.add_argument("--config", default="thực nghiệm/chess/experiment_cfg.json")
     parser.add_argument("--agents", nargs="+", help="Subset of configuration IDs; use a separate output directory")
     parser.add_argument("--output", help="Project-relative or absolute output directory")
@@ -519,10 +556,16 @@ def main(argv=None):
                     raise ValueError("All games completed but bot errors/timeouts exist; inspect before accepting benchmark")
             return 0
         config = load_config(args.config, args.agents, args.command == "smoke")
+        if args.move_time_limit is not None:
+            from agents.search_limits import validate_seconds
+            validate_seconds(args.move_time_limit)
+            config["move_time_limit_seconds"] = args.move_time_limit
         jobs = schedule(config)
         output = project_path(args.output or config["output_dir"] + ("_smoke" if args.command == "smoke" else ""))
         print(f"{len(config['agents'])} agents; {len(config['agents'])*(len(config['agents'])-1)//2} pairs; {len(jobs)} games; mode={config['mode']}")
         print(f"Output: {output}")
+        if config.get("move_time_limit_seconds") is not None:
+            print(f"Think-time ceiling: {config['move_time_limit_seconds']:g}s/move; best-so-far, legal fallback if needed")
         if args.command == "plan":
             _, missing = provenance(config)
             print("Missing checkpoints:\n" + "\n".join(missing) if missing else "Checkpoint paths exist; use check to validate models")
