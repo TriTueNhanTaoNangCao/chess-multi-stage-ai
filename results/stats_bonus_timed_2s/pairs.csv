@@ -1,0 +1,4 @@
+﻿pair,agent_a,agent_b,N,W,D,L,score,wilson_low,wilson_high,bootstrap_low,bootstrap_high,white_score,black_score,mean_plies,a_ms_mean,a_ms_p95,b_ms_mean,b_ms_p95,timeout_games,error_games,reasons
+alphabeta__alphago,alphabeta,alphago,100,83,7,10,0.865,0.784399,0.918596,0.805,0.92,0.92,0.81,64.61,1981.991,1983.041,1928.784,2185.489,0,0,checkmate:93; threefold_repetition:7
+alphabeta__alphazero_v2,alphabeta,alphazero_v2,100,100,0,0,1.0,0.963007,1.0,1.0,1.0,1.0,1.0,44.08,1981.733,1982.237,1888.789,2181.436,0,0,checkmate:100
+alphabeta__mcts_pure,alphabeta,mcts_pure,100,100,0,0,1.0,0.963007,1.0,1.0,1.0,1.0,1.0,31.72,1982.243,1983.314,1833.337,1982.634,0,0,checkmate:100

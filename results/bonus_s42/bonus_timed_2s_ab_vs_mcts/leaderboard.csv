@@ -1,0 +1,3 @@
+﻿agent,games,wins,draws,losses,white_games,white_wins,white_draws,white_losses,black_games,black_wins,black_draws,black_losses,elo,timeout_games,error_games,win_pct,draw_pct,score_pct,white_win_pct,white_draw_pct,white_score_pct,black_win_pct,black_draw_pct,black_score_pct,ms_per_move
+alphabeta,100,100,0,0,50,50,0,0,50,50,0,0,1508.39,0,0,100.0,0.0,100.0,100.0,0.0,100.0,100.0,0.0,100.0,1982.243
+mcts_pure,100,0,0,100,50,0,0,50,50,0,0,50,891.61,0,0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1833.337
