@@ -1,0 +1,3 @@
+﻿pair,agent,games,wins,draws,losses,white_games,white_wins,white_draws,white_losses,black_games,black_wins,black_draws,black_losses,elo,timeout_games,error_games,win_pct,draw_pct,score_pct,white_win_pct,white_draw_pct,white_score_pct,black_win_pct,black_draw_pct,black_score_pct,ms_per_move
+minimax__mcts_pure,minimax,200,199,1,0,100,100,0,0,100,99,1,0,1563.89,0,0,99.5,0.5,99.75,100.0,0.0,100.0,99.0,1.0,99.5,451.515
+minimax__mcts_pure,mcts_pure,200,0,1,199,100,0,1,99,100,0,0,100,836.11,0,0,0.0,0.5,0.25,0.0,1.0,0.5,0.0,0.0,0.0,456.287

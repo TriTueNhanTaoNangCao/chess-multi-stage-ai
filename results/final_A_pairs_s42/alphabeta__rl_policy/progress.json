@@ -1,0 +1,15 @@
+{
+  "completed_games": 200,
+  "expected_games": 200,
+  "complete": true,
+  "clean": true,
+  "mode": "official",
+  "error_games": 0,
+  "timeout_games": 0,
+  "percent_unit": "0..100",
+  "paired_games_are_not_independent": true,
+  "checkpoint_sha256": {
+    "rl_policy.checkpoint": "629e06baa336acd3b2f9cdb0cb87590524dd54ccb217b3a496967be7e4ddf7e4"
+  },
+  "fingerprint": "e3d4395f695121e9ac28200ccbca209d3a8014a835ca1355644c92a78a161427"
+}

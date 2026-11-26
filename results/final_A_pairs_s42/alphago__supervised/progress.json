@@ -1,0 +1,17 @@
+{
+  "completed_games": 200,
+  "expected_games": 200,
+  "complete": true,
+  "clean": true,
+  "mode": "official",
+  "error_games": 0,
+  "timeout_games": 0,
+  "percent_unit": "0..100",
+  "paired_games_are_not_independent": true,
+  "checkpoint_sha256": {
+    "supervised.checkpoint": "99ee0a6bcc2a2d80fa794bb90464ed2a68b57151622bdfff5388da976595073b",
+    "alphago.checkpoint_policy": "629e06baa336acd3b2f9cdb0cb87590524dd54ccb217b3a496967be7e4ddf7e4",
+    "alphago.checkpoint_value": "6731b88954be429f9bec0b2213227e8d9ef9c75637db8f9c4bf539435d518d0b"
+  },
+  "fingerprint": "740608d9fc04f074057549ea33a5fe9d9fb10010d4ec0c325eeff718ce98cc9f"
+}
