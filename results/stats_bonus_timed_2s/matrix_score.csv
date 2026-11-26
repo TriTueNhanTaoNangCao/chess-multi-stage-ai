@@ -1,0 +1,5 @@
+﻿agent,alphabeta,mcts_pure,alphago,alphazero_v2
+alphabeta,-,1.0,0.865,1.0
+mcts_pure,0.0,-,,
+alphago,0.135,,-,
+alphazero_v2,0.0,,,-
