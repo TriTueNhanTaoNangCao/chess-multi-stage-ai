@@ -1,5 +1,0 @@
-﻿agent,games,wins,draws,losses,white_games,white_wins,white_draws,white_losses,black_games,black_wins,black_draws,black_losses,elo,timeout_games,error_games,win_pct,draw_pct,score_pct,white_win_pct,white_draw_pct,white_score_pct,black_win_pct,black_draw_pct,black_score_pct,ms_per_move
-alphago,200,183,17,0,100,91,9,0,100,92,8,0,1446.65,0,0,91.5,8.5,95.75,91.0,9.0,95.5,92.0,8.0,96.0,2625.301
-rl_policy,200,11,176,13,100,8,89,3,100,3,87,10,1202.56,0,0,5.5,88.0,49.5,8.0,89.0,52.5,3.0,87.0,46.5,2.172
-alphazero,1,0,0,1,0,0,0,0,1,0,0,1,1174.16,0,0,0.0,0.0,0.0,,,,0.0,0.0,0.0,3770.095
-supervised,401,14,193,194,201,11,95,95,200,3,98,99,976.63,0,0,3.4913,48.1297,27.5561,5.4726,47.2637,29.1045,1.5,49.0,26.0,2.874
