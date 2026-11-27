@@ -49,7 +49,7 @@ Kết quả cũ được giữ nguyên. Đợt chạy có ngân sách thời gia
 | :--- | :--- | :--- | :---: |
 | **Thắng** | **Core Base**: kiến trúc, board, encoder<br>**GUI & CLI**: Pygame Dashboard, Terminal<br>**Arena**: 1v1, round-robin, Elo<br>**Stage 1**: Think1, Think2, Think3<br>**Stage 2**: Minimax, Alpha-Beta, Quiescence<br>Kiểm thử, tài liệu tích hợp | `games/`<br>`arena/`<br>`agents/stage1_heuristics/`<br>`agents/stage2_tree_search/`<br>`tests/`, `main.py` | ✅ **Đã triển khai; 61 test đạt** |
 | **Thi** | **Stage 3**: Pure MCTS — UCB1, Expansion, Rollout, Backprop, Tree Reuse | `agents/stage3_mcts_pure/` | ✅ **Đã hoàn thành; 40 test đạt** |
-| **Thái** | **Stage 4**: SL CNN từ PGN / expert data<br>**Stage 5**: REINFORCE & Value Net | `agents/stage4_supervised/`<br>`agents/stage5_rl/`<br>`training/` | ✅ Stage 4 baseline Lichess<br>⏳ Stage 5 |
+| **Thái** | **Stage 4**: SL CNN từ PGN / expert data<br>**Stage 5**: REINFORCE & Value Net | `agents/stage4_supervised/`<br>`agents/stage5_rl/`<br>`training/`<br>`scripts/stage4/`, `scripts/stage5/` | Đã triển khai pipeline Stage 4–5; có kết quả huấn luyện ([chi tiết](docs/STAGE4_STAGE5.md)) |
 | **Tùng** | **Stage 6**: AlphaGo MCTS — prior + value<br>**Stage 7**: AlphaZero — Dual-Head ResNet, PUCT, self-play | `agents/stage6_alphago/`<br>`agents/stage7_alphazero/`<br>`models/`<br>`training/` | ✅ **Hoàn thành 100% cả Stage 6 & 7; 57 test đạt** |
 
 **Nghiệm thu phần Thắng:** 61 kiểm thử tự động qua cả unittest và pytest; GUI được render và kiểm tra bằng SDL headless; giải vòng tròn thực tế 30 ván, không có nước phạm luật hoặc lỗi bot. Xem [biên bản QA](docs/QA.md) và [hợp đồng bàn giao Stage 3–7](docs/HANDOFF.md). Các test đạt không bảo đảm không còn lỗi ở mọi thế cờ.
@@ -63,8 +63,8 @@ Kết quả cũ được giữ nguyên. Đợt chạy có ngân sách thời gia
 | 1 | Think1: mate-in-one; Think2: tránh mate-in-one + MVV-LVA; Think3: material + PST + king safety | Board → legal move | Hoàn thành |
 | 2 | Minimax dạng Negamax; Alpha-Beta, move ordering, quiescence | Board → legal move | Hoàn thành |
 | 3 | Pure MCTS với UCB1, rollout và tái sử dụng cây (Tree Reuse) | Board → move theo visits | Hoàn thành |
-| 4 | CNN học giám sát | Tensor → policy logits, legal mask | Skeleton |
-| 5 | REINFORCE và value baseline | Self-play → policy/value | Skeleton |
+| 4 | CNN học giám sát trên PGN | Tensor → policy logits, legal mask | Đã triển khai; Policy 300k |
+| 5 | REINFORCE, collector ba pha và frozen Value baseline | Self-play → Policy; dữ liệu kết quả → Value | Đã triển khai; B16 và Paper Policy |
 | 6 | AlphaGo-style MCTS | Policy prior + value/rollout → move | Hoàn thành ([Chi tiết](docs/STAGE6_REPORT.md)) |
 | 7 | AlphaZero-style self-play, PUCT, dual-head ResNet | State → policy/value → search | Hoàn thành ([Chi tiết](docs/STAGE7_REPORT.md)) |
 
@@ -269,27 +269,49 @@ Tensor 14 kênh **không đủ khôi phục toàn bộ luật**: thiếu quyền
 
 Đây là encoder đơn giản của dự án, **không phải đầy đủ biểu diễn lịch sử của AlphaZero gốc**. Tùng/Thái cần version hóa encoder và checkpoint nếu bổ sung history/castling planes; checkpoint từ encoder 18 kênh bản nháp không tương thích.
 
-### Stage 4: Policy 300k hiện hành và baseline lịch sử
+### Stage 4: Policy học giám sát trên 300k ván
 
-Checkpoint Stage 4 hiện hành duy nhất là **`checkpoints/stage4/stage4_policy.pt`**, được đổi tên từ `best_lichess_300k.pt`; SHA256 không đổi: `99ee0a6bcc2a2d80fa794bb90464ed2a68b57151622bdfff5388da976595073b`. Đây là CNN 14 kênh/4.672 actions, tương thích loader Stage 4 và khởi tạo Stage 5. Việc đổi tên không huấn luyện lại hoặc thay metadata checkpoint.
+Dữ liệu là **300.000 ván Lichess Elite tháng 01–03/2024**, mỗi tháng 100.000 ván có mẫu hợp lệ. Lọc cờ tiêu chuẩn từ bàn chuẩn, loại bullet, ván lỗi và trùng chuỗi nước UCI. Chia theo ván trong từng tháng: **90% train / 10% validation**, lấy ngẫu nhiên tối đa **32 thế trước nước đi/ván**. Nhãn là nước thực tế trong PGN, kèm legal mask. Entry point tạo NPY theo batch là `scripts/stage4/build_dataset_300k.py`; trainer dùng memory-map để đọc mẫu.
 
-Baseline **lịch sử** dùng **Lichess Elite 02/2023**: reservoir sampling seed 42 lấy 10.000 ván, lọc còn 9.886 ván. Split theo ván train/validation/test là 7.908/988/990, tương ứng 672.839/83.808/85.364 mẫu. Dataset trên Kaggle lưu thành các mảng NPY để memory-map; truyền thư mục dataset bằng `--dataset_dir`, không hard-code Kaggle input root. Loader vẫn tương thích NPZ và chấp nhận một trong hai bố cục NPY:
+Policy dùng CNN **14 kênh / 4.672 actions**: ba khối Conv–BatchNorm–ReLU 128 kênh, FC 512, Dropout 0,2 và đầu logits. Train bằng legal-masked cross-entropy, Adam `1e-3`, batch 64, seed 42, tối đa 20 epoch, patience 3; chọn checkpoint theo validation loss thấp nhất. Entry point là `scripts/stage4/train_300k.py`, tái sử dụng `training/stage4_train_sl.py` và yêu cầu output mới.
 
-```text
-<dataset_dir>/train_states.npy, train_targets.npy, train_legal_masks.npy, ...
-<dataset_dir>/train/states.npy, train/targets.npy, train/legal_masks.npy, ...
-```
+Theo log lần chạy mới do người thực hiện cung cấp: **8.572.676 mẫu train / 952.874 mẫu validation**, hoàn thành **7 epoch**, chọn **epoch 4**, validation loss **1,97981**, Top-1 **40,70%**, Top-5 **77,57%**. Chuẩn bị dataset khoảng **39 phút 35 giây**, train/validation **1 giờ 26 phút 37 giây**, tổng phiên đến kiểm tra checkpoint **2 giờ 6 phút 52 giây**, trên Tesla T4; CPU chưa ghi nhận. Đây là metric validation, không phải kết quả đấu trận.
 
-Checkpoint baseline lịch sử `checkpoints/stage4/best_lichess.pt` (epoch 4) đã được gỡ khỏi local cùng bản sao upload. Kết quả test đã ghi nhận: loss 2,3255; Top-1 32,53%; Top-5 67,00%. Đây là kết quả lịch sử, không phải metric của bản 300k. Các runner 2071/2073 và kèo old–300k cần checkpoint 10k sẽ báo thiếu trọng số lịch sử. Agent chạy mới luôn yêu cầu checkpoint tường minh:
+Đường dẫn bàn giao là **`checkpoints/stage4/stage4_policy.pt`**. Chưa đối chiếu hash checkpoint vừa train lại với file local; không mặc định đổi tên hoặc thay file đồng nghĩa đã cập nhật trọng số. Agent yêu cầu checkpoint tường minh:
 
 ```powershell
 python main.py --agent supervised --checkpoint checkpoints/stage4/stage4_policy.pt
 python -m arena.tournament --agents random supervised:checkpoints/stage4/stage4_policy.pt --games 10
 ```
 
-Kaggle: dùng tên `stage4_policy.pt` khi gắn Input hoặc tìm checkpoint trong notebook. `stage4_source.zip` ở root repo giữ cấu trúc source và checkpoint tại `checkpoints/stage4/stage4_policy.pt`; gói source trong `kaggle_stage4_inputs/` đi cùng bản checkpoint riêng cùng tên. Manifest upload hiện hành là `kaggle_stage4_inputs/input_manifest_stage4_policy.json`; `input_manifest.json` cũ được giữ nguyên như bằng chứng lịch sử. Với bundle Value, đặt SL tại `<bundle-root>/checkpoints/stage4/stage4_policy.pt`, chạy `stage5_value_pipeline.py collect` và truyền B16 tương ứng bằng `--rl-checkpoint`; job 2071 khóa hash cũ chỉ dành cho tái lập lịch sử.
+### Stage 5: B16 → dữ liệu Value → Value → Paper Policy
 
-Quy ước `.pt`, metadata/config, dấu value, thứ tự Tùng bàn giao CNN/Value cho Thái và thiết kế nạp checkpoint vào factory được ghi tại [docs/HANDOFF.md](docs/HANDOFF.md). Bộ nạp checkpoint chỉ được tích hợp khi stage học máy có model thật; không công bố skeleton như bot đã huấn luyện.
+Entry point **`scripts/stage5/train_stage5.py`** gọi các trainer/collector hiện có và kiểm tra đầu ra từng bước trước khi chuyển tiếp:
+
+1. **B16:** khởi tạo Policy từ Stage 4, REINFORCE với baseline 0 và Value disabled; **400 × 16 ván thử**, LR `1e-5`, seed 42, chunk 16, opponent pool tối đa 4 giữ Stage 4, snapshot mỗi 40 iteration.
+2. **Collector ba pha:** **24.576 ván thử**, shard 512, seed 2071. Lấy U nguyên đều trong [1,100]; Stage 4 chơi U−1 ply, chọn đều một nước hợp lệ rồi lưu thế cờ ngay sau đó; B16 chơi tiếp cả hai bên. Policy sampling legal-masked, temperature 1. Mỗi ván tối đa một mẫu, nhãn theo bên tới lượt tại state đã lưu; chia train/val/test theo ván và kiểm tra trùng tensor giữa split.
+3. **Value:** khởi tạo mạng mới, seed 2072; học MSE bằng Adam `1e-4`, batch 128, tối đa 100 epoch, patience 10; chọn `value/best.pt` theo validation MSE thấp nhất. Không lấy trọng số Policy để khởi tạo Value.
+4. **Paper Policy:** fresh-init từ B16, Adam mới, Value frozen làm baseline; **80 × 32 ván thử**, LR Policy `1e-5`, seed 2073, chunk 8, pool tối đa 4 giữ Stage 4, snapshot mỗi 5 iteration. Công thức REINFORCE được giữ nguyên.
+
+B16/Paper bắt đầu từ bàn chuẩn; giới hạn **300 ply**. Collector cũng giới hạn **300 ply tổng từ đầu ván**. Reward **+1 / 0 / −1** tương ứng **thắng / hòa / thua theo góc nhìn learner**; Paper dùng advantage = reward − Value(state). Ván chưa terminal khi chạm trần là truncated, không gán hòa giả để huấn luyện. Claim draw được giữ theo hợp đồng checkpoint; collector yêu cầu `claim_draw=True`.
+
+Ví dụ chạy mới từ root repo (chỉ thực hiện khi muốn huấn luyện, output phải chưa tồn tại):
+
+```powershell
+python -u -m scripts.stage5.train_stage5 --stage4-checkpoint checkpoints/stage4/stage4_policy.pt --device cuda --output-dir checkpoints/stage5/stage5_new
+```
+
+Runner ghi `run_config.json`, `steps.json`, checkpoint và log trong output. B16/Paper dùng **`last.pt` cuối quá trình**, không tự chọn Policy tốt nhất qua đấu trận. Bộ checkpoint bàn giao đã chốt:
+
+| Thành phần | Đường dẫn |
+| --- | --- |
+| B16 | `checkpoints/stage5/stage5_8h/b16/last.pt` |
+| Value | `checkpoints/stage5/stage5_8h/value/best.pt` |
+| Paper Policy | `checkpoints/stage5/stage5_8h/paper_policy/last.pt` |
+
+Khi đưa lên Kaggle, giữ cấu trúc module từ root repo, cấp riêng PGN/checkpoint theo bước cần chạy và kiểm tra dependency theo `scripts/stage5/stage5_value_bundle_files.txt`. Không mặc định ZIP cũ chứa source hiện tại hoặc checkpoint được Git tự tải lên. Source tái lập được hoàn thiện sau thực nghiệm, không tuyên bố là notebook gốc hoặc bảo đảm checkpoint trùng từng byte.
+
+Chi tiết cấu hình, tài nguyên, thời gian và các mục chưa xác minh nằm trong [tài liệu Stage 4–5](docs/STAGE4_STAGE5.md). Tổng mẫu Value còn chênh giữa log và tổng nhãn, cần đối chiếu manifest/dataset trước khi chốt. Quy ước checkpoint chung xem [HANDOFF](docs/HANDOFF.md); không dùng số liệu của bộ checkpoint lịch sử thay cho kết quả bộ `stage5_8h`.
 
 ## 6. Quy trình chuẩn 5 bước
 
@@ -305,7 +327,7 @@ Quy ước `.pt`, metadata/config, dấu value, thứ tự Tùng bàn giao CNN/V
 | :--- | :--- |
 | Thắng | `feat/core-gui-arena`, `feat/stage1-heuristics`, `feat/stage2-tree-search` |
 | Thi | `feat/stage3` |
-| Thái | `feat/stage4-sl-cnn`, `feat/stage5-rl-policy` |
+| Thái | `feat/stage4`, `feat/stage5-pipeline` |
 | Tùng | `feat/stage6-alphago-mcts`, `feat/stage7-alphazero` |
 
 Tạo nhánh từ main mới nhất, commit theo phạm vi, mở PR kèm test và kết quả arena. Nhóm review trước khi merge; không push trực tiếp main. Ví dụ: `git switch -c feat/stage3-mcts-pure`.
