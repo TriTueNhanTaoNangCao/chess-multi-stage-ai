@@ -21,5 +21,8 @@ with st.container(border=True, key="setup_bar", gap="small"):
             st.rerun()
         except Exception as exc:
             st.error(f"Không thể bắt đầu giải: {exc}")
+    st.caption("Thiết lập phía trên áp dụng khi bấm Bắt đầu giải. Thông số bên trái là của ván đang mở.")
     st.caption(f"Bot 1 vs Bot 2  ·  {int(games)} ván liên tiếp  ·  Luân phiên Trắng / Đen  ·  Tự lưu kết quả")
-live_match()
+    if white.move_time_limit_seconds is not None or black.move_time_limit_seconds is not None:
+        st.caption("Giới hạn giây/nước được cấu hình riêng cho từng bot. Dùng cùng ngân sách khi so sánh.")
+live_match(tournament=True)

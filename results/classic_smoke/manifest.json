@@ -1,0 +1,84 @@
+{
+  "config": {
+    "schema_version": 1,
+    "seed": 42,
+    "games_per_pair": 2,
+    "max_plies": 8,
+    "claim_draw": true,
+    "device": "cpu",
+    "torch_threads": 2,
+    "move_timeout_seconds": 120,
+    "startup_timeout_seconds": 300,
+    "openings_file": "thực nghiệm/chess/openings_100.json",
+    "output_dir": "results/all_models_200",
+    "agents": [
+      {
+        "id": "random",
+        "key": "random",
+        "kwargs": {}
+      },
+      {
+        "id": "think1",
+        "key": "think1",
+        "kwargs": {}
+      },
+      {
+        "id": "think2",
+        "key": "think2",
+        "kwargs": {}
+      },
+      {
+        "id": "think3",
+        "key": "think3",
+        "kwargs": {}
+      },
+      {
+        "id": "minimax",
+        "key": "minimax",
+        "kwargs": {
+          "depth": 2
+        }
+      },
+      {
+        "id": "alphabeta",
+        "key": "alphabeta",
+        "kwargs": {
+          "depth": 2,
+          "q_depth": 6,
+          "use_quiescence": true
+        }
+      },
+      {
+        "id": "mcts_pure",
+        "key": "mcts_pure",
+        "kwargs": {
+          "simulations": 100,
+          "max_rollout_depth": 30
+        }
+      }
+    ],
+    "openings": [
+      [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ]
+    ],
+    "mode": "smoke"
+  },
+  "checkpoint_sha256": {},
+  "source_sha256": "b4fa4b6bb7be1f598a95553bacd0c462e928db8f1d1170cf477bee5fb53c43e5",
+  "environment": {
+    "chess": "1.11.2",
+    "numpy": "2.5.4",
+    "torch": "2.14.1",
+    "python": "3.13.7",
+    "platform": "Windows-10-10.0.19045-SP0"
+  },
+  "fingerprint": "d62a2f08f1da7c6989978b5b0959afb2259ee3a9ab3049627924148ce4d3ea25"
+}

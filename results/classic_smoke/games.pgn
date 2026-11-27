@@ -1,0 +1,546 @@
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "random"]
+[Black "think1"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. a3 Nc6 6. Bf4 h5 7. c4 Rh6 8. Be3 d6 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think1"]
+[Black "random"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Qd2 a6 6. a4 Bd6 7. Nxe5 fxe4 8. b3 Nf6 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "random"]
+[Black "think2"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. a3 fxe4 6. axb4 exf3+ 7. Ke3 exd4+ 8. Kd3 fxg2 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think2"]
+[Black "random"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. exf5 a6 6. dxe5 Bd6 7. exd6 h5 8. dxc7 Ne7 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "random"]
+[Black "think3"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. a3 fxe4 6. axb4 exf3+ 7. Ke3 fxg2 8. c3 gxh1=Q 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think3"]
+[Black "random"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Nxe5 f4 6. Bxf4 Bc5 7. dxc5 h5 8. Qxd7+ Kf8 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "random"]
+[Black "minimax"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. a3 Bd6 6. Bh6 Nxh6 7. Ra2 fxe4 8. Nh4 Qxh4 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "minimax"]
+[Black "random"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Nxe5 f4 6. Bxf4 Bc5 7. dxc5 h5 8. Nc3 Ne7 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "random"]
+[Black "alphabeta"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. a3 fxe4 6. axb4 exf3+ 7. Ke3 Nc6 8. g4 Nxd4 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "alphabeta"]
+[Black "random"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. exf5 a6 6. a3 Bd6 7. dxe5 Bxa3 8. Nxa3 Nf6 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "random"]
+[Black "mcts_pure"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. a3 f4 6. a4 Ne7 7. Rg1 Nd5 8. Ra2 Kf8 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "mcts_pure"]
+[Black "random"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Bd2 a6 6. Qc1 Bd6 7. Bg5 h6 8. Nfd2 Nf6 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think1"]
+[Black "think2"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Qd2 Bxd2 6. a3 Bxc1 7. a4 fxe4 8. Ng5 Bxg5 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think2"]
+[Black "think1"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. exf5 Nc6 6. dxe5 d5 7. exd6 Nh6 8. Bxh6 a6 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think1"]
+[Black "think3"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Qd2 Bxd2 6. a3 Bxc1 7. a4 fxe4 8. Ng5 Bxg5 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think3"]
+[Black "think1"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Nxe5 Na6 6. exf5 h6 7. Bxh6 Rxh6 8. Nc3 c6 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think1"]
+[Black "minimax"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Qd2 Bxd2 6. a3 Bxc1 7. a4 fxe4 8. Ng5 Bxg5 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "minimax"]
+[Black "think1"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Nxe5 Na6 6. exf5 h6 7. Bf4 h5 8. Qd3 Rh6 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think1"]
+[Black "alphabeta"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Qd2 Bxd2 6. a3 Bxc1 7. a4 Bxb2 8. Ng5 Bxa1 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "alphabeta"]
+[Black "think1"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. exf5 Nc6 6. Nxe5 b5 7. Nc3 Nh6 8. Nd5 g5 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think1"]
+[Black "mcts_pure"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Qd2 Bxd2 6. a3 Ne7 7. b4 Bxc1 8. b5 Bb2 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "mcts_pure"]
+[Black "think1"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Bd2 Nc6 6. Ke3 g5 7. exf5 Nh6 8. Ke2 b5 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think2"]
+[Black "think3"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. exf5 exd4 6. Nxd4 Nc6 7. Nxc6 dxc6 8. Qxd8+ Kxd8 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think3"]
+[Black "think2"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Nxe5 fxe4 6. Nc3 Bxc3 7. bxc3 Ne7 8. Nxd7 Nxd7 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think2"]
+[Black "minimax"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. exf5 exd4 6. Nxd4 Qe7+ 7. Kf3 Nf6 8. Bf4 Qe4+ 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "minimax"]
+[Black "think2"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Nxe5 fxe4 6. Bf4 Nf6 7. Bg3 Rg8 8. Bf4 h6 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think2"]
+[Black "alphabeta"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. exf5 e4 6. Ne5 d6 7. Nf7 Kxf7 8. Bd2 Bxd2 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "alphabeta"]
+[Black "think2"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. exf5 exd4 6. Qxd4 Nf6 7. Qxb4 Rg8 8. Nc3 Ne4 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think2"]
+[Black "mcts_pure"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. exf5 Kf8 6. dxe5 Nh6 7. Bxh6 Ba3 8. bxa3 gxh6 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "mcts_pure"]
+[Black "think2"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Bd2 Bxd2 6. Nbxd2 fxe4 7. Qb1 exf3+ 8. Nxf3 exd4 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think3"]
+[Black "minimax"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Nxe5 fxe4 6. Nc3 Bxc3 7. bxc3 d5 8. Bg5 Qxg5 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "minimax"]
+[Black "think3"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Nxe5 fxe4 6. Bf4 Nc6 7. Nxc6 dxc6 8. Be3 Qxd4 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think3"]
+[Black "alphabeta"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Nxe5 fxe4 6. Nc3 d6 7. Nxe4 dxe5 8. dxe5 Bg4+ 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "alphabeta"]
+[Black "think3"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. exf5 exd4 6. Qxd4 Nc6 7. Qxg7 Nge7 8. Qxh8+ Ng8 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "think3"]
+[Black "mcts_pure"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Nxe5 h5 6. exf5 a6 7. Nc3 Bxc3 8. bxc3 Qg5 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "mcts_pure"]
+[Black "think3"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Bd2 Bxd2 6. Nbxd2 fxe4 7. Qb1 exf3+ 8. Nxf3 exd4 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "minimax"]
+[Black "alphabeta"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Nxe5 fxe4 6. Bf4 d6 7. Nc4 Bg4+ 8. f3 Qf6 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "alphabeta"]
+[Black "minimax"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. exf5 exd4 6. Qxd4 Qe7+ 7. Ne5 Ba5 8. Nc3 Bxc3 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "minimax"]
+[Black "mcts_pure"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Nxe5 h5 6. exf5 a6 7. Bf4 Nh6 8. Bxh6 a5 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "mcts_pure"]
+[Black "minimax"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Bd2 Bxd2 6. Nbxd2 fxe4 7. Qb1 exf3+ 8. Nxf3 e4 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "alphabeta"]
+[Black "mcts_pure"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. exf5 Kf8 6. a3 Ke8 7. axb4 Na6 8. Nc3 b5 1/2-1/2
+
+[Event "benchmark"]
+[Site "?"]
+[Date "2026.11.20"]
+[Round "?"]
+[White "mcts_pure"]
+[Black "alphabeta"]
+[Result "1/2-1/2"]
+[FEN "rnbqk1nr/pppp2pp/8/4pp2/1b1PP3/5N2/PPP1KPPP/RNBQ1B1R w kq - 0 5"]
+[SetUp "1"]
+[Termination "max_plies_adjudication"]
+
+5. Bd2 fxe4 6. g3 exf3+ 7. Kxf3 Qf6+ 8. Kg4 d5+ 1/2-1/2
+

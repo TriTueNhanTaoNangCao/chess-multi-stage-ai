@@ -182,6 +182,49 @@ class PureMCTSAgent(BaseAgent):
         claim_draw = getattr(board, "claim_draw", True)
         return (initial_fen, moves, claim_draw)
 
+    def act_timed(self, board, limits):
+        from agents.search_limits import rollout_position
+
+        limits.check()
+        moves = board.get_legal_actions()
+        if len(moves) == 1:
+            limits.publish(moves[0], simulations_completed=0)
+            return moves[0]
+        reusable = self._find_reusable_node(board)
+        if reusable is not None:
+            ancestor = reusable.parent
+            reusable.parent, reusable.move = None, None
+            while ancestor is not None:
+                parent = ancestor.parent
+                ancestor.children.clear()
+                ancestor.parent = None
+                ancestor = parent
+            root = reusable
+        else:
+            root = MCTSNode(board=board.clone())
+        self.root = root
+        if root.children and any(c.visits for c in root.children.values()):
+            best = max(root.children, key=lambda m: (root.children[m].visits, -root.children[m].mean_value))
+            limits.publish(best, simulations_completed=0, root_visits=root.visits)
+        for completed in range(1, self.simulations + 1):
+            limits.check()
+            node = root
+            while node.is_fully_expanded() and not node.is_terminal() and node.children:
+                limits.check()
+                node = node.best_child(c=self.c, rng=self.rng)
+            if not node.is_terminal() and node.untried_moves:
+                node = self._expand(node)
+            position = rollout_position(node.board, self.max_rollout_depth, self.rng, limits)
+            outcome = position.outcome(claim_draw=board.claim_draw)
+            white_score = ((0.0 if outcome.winner is None else (1.0 if outcome.winner else -1.0))
+                           if outcome else evaluate_cutoff_score(position))
+            limits.check()
+            self._backpropagate(node, white_score)
+            best = max(root.children, key=lambda m: (root.children[m].visits, -root.children[m].mean_value))
+            limits.publish(best, simulations_completed=completed, root_visits=root.visits)
+        return limits.best_move
+
+
     def _find_reusable_node(self, board: ChessBoard) -> Optional[MCTSNode]:
         """
         Tìm kiếm node trong cây hiện tại (self.root và các hậu duệ) khớp hoàn toàn với board.

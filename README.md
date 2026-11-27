@@ -15,7 +15,33 @@ Mở **http://localhost:8501**. Hướng dẫn cấu hình, phát lại, xuất 
 
 Giao diện đen–vàng đồng, setup thu gọn phía trên, bàn cờ ở giữa với kéo thả quân; lượng giá và biên bản nước đi bố trí hai bên.
 
+**Benchmark tất cả bot:** bộ cấu hình 11 bot, 200 ván/cặp (11.000 ván), đổi màu, lưu và resume: [hướng dẫn thực nghiệm](thực%20nghiệm/chess/README.md). Bắt đầu bằng `python scripts/run_all_models.py plan` để xem lịch và checkpoint còn thiếu.
+
 ![Chess Lab — GUI Streamlit](results/streamlit_preview.png)
+
+## Giới hạn thời gian suy nghĩ mỗi nước (tùy chọn)
+
+Trong cấu hình từng bot trên Streamlit, bật **Giới hạn thời gian suy nghĩ** rồi nhập giây/nước (mặc định 10, có thể chọn 15). Có ở cả Bàn đấu và Giải đấu. Tắt tùy chọn thì gọi `act(board)` như trước, không tạo worker thời gian hoặc giữ/gửi kết quả tìm kiếm liên tục. Depth và simulations vẫn là trần; bot tính xong sớm sẽ đi ngay.
+
+Khi bật, kết quả tốt nhất được giữ trong RAM và cập nhật qua IPC, không ghi từng node/mô phỏng xuống ổ đĩa. Minimax/Alpha–Beta dùng độ sâu đã hoàn tất; MCTS/AlphaGo/AlphaZero chọn nhánh có nhiều lượt thăm nhất (hòa thì xét giá trị). Hết ngân sách sẽ dùng kết quả đã có; chưa có thì đi nước hợp lệ dự phòng, không xử thua vì hết thời gian suy nghĩ. Thống kê mỗi nước ghi ngân sách, thời gian thực tế, độ sâu/số mô phỏng, `time_exhausted`, `fallback_used`, `hard_stop`.
+
+Worker nạp model để dùng lại. Nếu một lần suy luận không trả về kịp, worker bị kết thúc và nạp lại trước lượt sau; thời gian nạp không tính vào đồng hồ suy nghĩ. Giới hạn tìm kiếm có chừa một khoảng IPC nhỏ để dừng chủ động; GUI làm mới theo nhịp và thao tác kết thúc process có thể thêm một ít thời gian hiển thị/điều phối.
+
+```powershell
+# Chơi terminal, giới hạn 10 giây mỗi nước AI
+python main.py --cli --agent alphabeta --depth 6 --move-time-limit 10
+
+# Arena terminal, 15 giây/nước cho cả hai bot, output riêng
+python -m arena.tournament --agents minimax:6 alphabeta:6 --games 2 --max-plies 100 --move-time-limit 15 --output-dir results/arena_timed_15s
+
+# Thử nhanh benchmark; chưa dùng để kết luận sức mạnh
+python scripts/run_all_models.py smoke --agents random alphabeta --move-time-limit 10 --output results/timed_smoke_10s
+python scripts/run_all_models.py verify --output results/timed_smoke_10s
+```
+
+Bỏ `--move-time-limit` để giữ chế độ thường, hoặc dùng cấu hình JSON có `move_time_limit_seconds` là số dương; bỏ trường/null là tắt. Cấu hình mẫu cho 11 bot: `thực nghiệm/chess/experiment_timed.json`.
+
+Kết quả cũ được giữ nguyên. Đợt chạy có ngân sách thời gian dùng thư mục mới, không trộn với các đợt trước. Mã nguồn thay đổi sẽ làm đổi fingerprint; runner vẫn từ chối resume sai phiên bản. Nếu cần chạy tiếp đúng đợt cũ, dùng lại phiên bản trước thay đổi tính năng này (`52fca94558a73579dd06d60bf3a99befd5acb017`) và môi trường/checkpoint cũ. Không sửa manifest cũ để bỏ qua kiểm tra.
 
 ## 1. Phân công & tiến độ
 
@@ -243,21 +269,25 @@ Tensor 14 kênh **không đủ khôi phục toàn bộ luật**: thiếu quyền
 
 Đây là encoder đơn giản của dự án, **không phải đầy đủ biểu diễn lịch sử của AlphaZero gốc**. Tùng/Thái cần version hóa encoder và checkpoint nếu bổ sung history/castling planes; checkpoint từ encoder 18 kênh bản nháp không tương thích.
 
-### Stage 4 baseline: Lichess Elite
+### Stage 4: Policy 300k hiện hành và baseline lịch sử
 
-Baseline hiện tại dùng **Lichess Elite 02/2023**: reservoir sampling seed 42 lấy 10.000 ván, lọc còn 9.886 ván. Split theo ván train/validation/test là 7.908/988/990, tương ứng 672.839/83.808/85.364 mẫu. Dataset trên Kaggle lưu thành các mảng NPY để memory-map; truyền thư mục dataset bằng `--dataset_dir`, không hard-code Kaggle input root. Loader vẫn tương thích NPZ và chấp nhận một trong hai bố cục NPY:
+Checkpoint Stage 4 hiện hành duy nhất là **`checkpoints/stage4/stage4_policy.pt`**, được đổi tên từ `best_lichess_300k.pt`; SHA256 không đổi: `99ee0a6bcc2a2d80fa794bb90464ed2a68b57151622bdfff5388da976595073b`. Đây là CNN 14 kênh/4.672 actions, tương thích loader Stage 4 và khởi tạo Stage 5. Việc đổi tên không huấn luyện lại hoặc thay metadata checkpoint.
+
+Baseline **lịch sử** dùng **Lichess Elite 02/2023**: reservoir sampling seed 42 lấy 10.000 ván, lọc còn 9.886 ván. Split theo ván train/validation/test là 7.908/988/990, tương ứng 672.839/83.808/85.364 mẫu. Dataset trên Kaggle lưu thành các mảng NPY để memory-map; truyền thư mục dataset bằng `--dataset_dir`, không hard-code Kaggle input root. Loader vẫn tương thích NPZ và chấp nhận một trong hai bố cục NPY:
 
 ```text
 <dataset_dir>/train_states.npy, train_targets.npy, train_legal_masks.npy, ...
 <dataset_dir>/train/states.npy, train/targets.npy, train/legal_masks.npy, ...
 ```
 
-Checkpoint baseline local là `checkpoints/stage4/best_lichess.pt` (epoch 4). Kết quả test đã ghi nhận: loss 2,3255; Top-1 32,53%; Top-5 67,00%. Đây là kết quả lịch sử, không thay thế các report Carlsen/Arena cũ. Agent luôn yêu cầu checkpoint tường minh:
+Checkpoint baseline lịch sử `checkpoints/stage4/best_lichess.pt` (epoch 4) đã được gỡ khỏi local cùng bản sao upload. Kết quả test đã ghi nhận: loss 2,3255; Top-1 32,53%; Top-5 67,00%. Đây là kết quả lịch sử, không phải metric của bản 300k. Các runner 2071/2073 và kèo old–300k cần checkpoint 10k sẽ báo thiếu trọng số lịch sử. Agent chạy mới luôn yêu cầu checkpoint tường minh:
 
 ```powershell
-python main.py --agent supervised --checkpoint checkpoints/stage4/best_lichess.pt
-python -m arena.tournament --agents random supervised:checkpoints/stage4/best_lichess.pt --games 10
+python main.py --agent supervised --checkpoint checkpoints/stage4/stage4_policy.pt
+python -m arena.tournament --agents random supervised:checkpoints/stage4/stage4_policy.pt --games 10
 ```
+
+Kaggle: dùng tên `stage4_policy.pt` khi gắn Input hoặc tìm checkpoint trong notebook. `stage4_source.zip` ở root repo giữ cấu trúc source và checkpoint tại `checkpoints/stage4/stage4_policy.pt`; gói source trong `kaggle_stage4_inputs/` đi cùng bản checkpoint riêng cùng tên. Manifest upload hiện hành là `kaggle_stage4_inputs/input_manifest_stage4_policy.json`; `input_manifest.json` cũ được giữ nguyên như bằng chứng lịch sử. Với bundle Value, đặt SL tại `<bundle-root>/checkpoints/stage4/stage4_policy.pt`, chạy `stage5_value_pipeline.py collect` và truyền B16 tương ứng bằng `--rl-checkpoint`; job 2071 khóa hash cũ chỉ dành cho tái lập lịch sử.
 
 Quy ước `.pt`, metadata/config, dấu value, thứ tự Tùng bàn giao CNN/Value cho Thái và thiết kế nạp checkpoint vào factory được ghi tại [docs/HANDOFF.md](docs/HANDOFF.md). Bộ nạp checkpoint chỉ được tích hợp khi stage học máy có model thật; không công bố skeleton như bot đã huấn luyện.
 

@@ -1,3 +1,5 @@
+> Kết quả hoặc đề xuất cũ (trước 24/11/2026): không dùng cho báo cáo cuối.
+
 # Báo cáo Nghiệm thu Stage 6: AlphaGo MCTS (Policy Prior + Value Network)
 
 **Người thực hiện:** Tùng  

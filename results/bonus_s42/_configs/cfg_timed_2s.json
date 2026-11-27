@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "seed": 42,
+  "games_per_pair": 100,
+  "max_plies": 400,
+  "claim_draw": true,
+  "device": "cuda",
+  "torch_threads": 2,
+  "move_timeout_seconds": 120,
+  "startup_timeout_seconds": 300,
+  "openings_file": "thực nghiệm/chess/openings_100.json",
+  "output_dir": "results/final_A_arena_s42",
+  "agents": [
+    {
+      "id": "random",
+      "key": "random",
+      "kwargs": {}
+    },
+    {
+      "id": "think1",
+      "key": "think1",
+      "kwargs": {}
+    },
+    {
+      "id": "think2",
+      "key": "think2",
+      "kwargs": {}
+    },
+    {
+      "id": "think3",
+      "key": "think3",
+      "kwargs": {}
+    },
+    {
+      "id": "minimax",
+      "key": "minimax",
+      "kwargs": {
+        "depth": 2
+      }
+    },
+    {
+      "id": "alphabeta",
+      "key": "alphabeta",
+      "kwargs": {
+        "depth": 10,
+        "q_depth": 6,
+        "use_quiescence": true
+      }
+    },
+    {
+      "id": "mcts_pure",
+      "key": "mcts_pure",
+      "kwargs": {
+        "simulations": 5000,
+        "max_rollout_depth": 30
+      }
+    },
+    {
+      "id": "supervised",
+      "key": "supervised",
+      "kwargs": {
+        "checkpoint": "checkpoints/stage4/best_lichess.pt"
+      }
+    },
+    {
+      "id": "rl_policy",
+      "key": "rl_policy",
+      "kwargs": {
+        "checkpoint": "checkpoints/stage5/paper_frozen_2073/last.pt"
+      }
+    },
+    {
+      "id": "alphago",
+      "key": "alphago",
+      "kwargs": {
+        "checkpoint_policy": "checkpoints/stage6/policy.pt",
+        "checkpoint_value": "checkpoints/stage6/value.pt",
+        "simulations": 5000,
+        "rollout_weight": 0.5,
+        "max_rollout_depth": 15
+      }
+    },
+    {
+      "id": "alphazero",
+      "key": "alphazero",
+      "kwargs": {
+        "checkpoint": "checkpoints/stage7/best.pt",
+        "simulations": 30,
+        "temperature": 0.0,
+        "add_noise": false
+      }
+    },
+    {
+      "id": "alphazero_v2",
+      "key": "alphazero",
+      "kwargs": {
+        "checkpoint": "checkpoints/stage7_v2/best.pt",
+        "simulations": 5000,
+        "temperature": 0.0,
+        "add_noise": false
+      }
+    }
+  ],
+  "move_time_limit_seconds": 2.0
+}

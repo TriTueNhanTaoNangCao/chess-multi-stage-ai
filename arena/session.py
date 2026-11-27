@@ -7,6 +7,12 @@ from games.chess.board import ChessBoard
 def measure_move(agent, board):
     """Time inference only, on a private snapshot; report optional search statistics."""
     snapshot = board.clone()
+    prepare = getattr(agent, "prepare", None)
+    if prepare is not None:
+        try:
+            prepare()
+        except Exception as exc:
+            return None, 0.0, f"{type(exc).__name__}: {exc}", {}
     started = perf_counter()
     move, error, stats = None, "", {}
     try:
@@ -26,6 +32,9 @@ def measure_move(agent, board):
     if root is not None:
         stats["root_visits"] = root.visits
         stats["root_value"] = root.mean_value
+    timed_stats = getattr(agent, "last_search_stats", None)
+    if timed_stats:
+        stats.update(timed_stats)
     return move, seconds, error, stats
 
 

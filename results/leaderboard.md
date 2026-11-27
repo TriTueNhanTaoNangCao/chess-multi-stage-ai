@@ -1,3 +1,5 @@
+> Kết quả hoặc đề xuất cũ (trước 24/11/2026): không dùng cho báo cáo cuối.
+
 # Local Elo leaderboard
 
 Games/pair: 2; max plies: 200; initial Elo: 1200; logistic K: 32.

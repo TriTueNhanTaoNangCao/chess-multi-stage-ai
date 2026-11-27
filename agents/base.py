@@ -32,6 +32,14 @@ class BaseAgent(ABC):
         """Reset internal search state, caches, or history between games."""
         pass
 
+    def act_timed(self, board, limits):
+        """One-pass agents use the supervisor's fallback if inference overruns."""
+        limits.check()
+        move = self.act(board)
+        limits.publish(move)
+        return move
+
+
     def __str__(self) -> str:
         return self.name
 

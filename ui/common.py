@@ -44,7 +44,14 @@ def bot_picker(prefix, default="alphabeta"):
             st.caption("Stage 4–5 cần checkpoint. Stage 6–7 thiếu trọng số sẽ dùng mạng chưa huấn luyện.")
     with st.expander("Nâng cao"):
         seed = st.number_input("Seed", 0, 2147483647, 42, key=f"{prefix}_seed")
-    return AgentConfig(key, int(depth), int(simulations), int(seed), checkpoint, value, device)
+    timed = st.toggle("Giới hạn thời gian suy nghĩ", value=False, key=f"{prefix}_timed")
+    seconds = None
+    if timed:
+        seconds = st.number_input("Tối đa mỗi nước (giây)", min_value=0.1, max_value=300.0,
+                                  value=10.0, step=1.0, key=f"{prefix}_move_seconds")
+        st.caption("Tính xong sớm sẽ đi ngay. Hết giờ dùng nước tốt nhất đã tìm được; chưa có thì dùng nước hợp lệ dự phòng.")
+    return AgentConfig(key, int(depth), int(simulations), int(seed), checkpoint, value, device,
+                       move_time_limit_seconds=seconds)
 
 
 def downloads(record, prefix, *, disabled=False):
@@ -66,11 +73,19 @@ def move_table(record):
             st.caption("Chưa có nước đi.")
         return
     rows = []
+    has_timing = any("time_limit_seconds" in item for item in data)
     for entry in data:
-        rows.append({"Lượt": entry["ply"], "Bên": "Trắng" if entry["color"] == "white" else "Đen",
+        row = {"Lượt": entry["ply"], "Bên": "Trắng" if entry["color"] == "white" else "Đen",
                      "Nước": entry.get("san", "Lỗi"), "Giây": round(entry["seconds"], 3),
                      "Nodes": entry.get("nodes_visited"), "Cắt nhánh": entry.get("cutoffs"),
-                     "Visits gốc": entry.get("root_visits"), "Ngân sách mô phỏng": entry.get("simulation_budget")})
+                     "Visits gốc": entry.get("root_visits"), "Ngân sách mô phỏng": entry.get("simulation_budget")}
+        if has_timing:
+            row.update({"Giới hạn (s)": entry.get("time_limit_seconds"),
+                        "Độ sâu hoàn tất": entry.get("completed_depth"),
+                        "Mô phỏng hoàn tất": entry.get("simulations_completed"),
+                        "Hết thời gian": entry.get("time_exhausted"),
+                        "Nước dự phòng": entry.get("fallback_used")})
+        rows.append(row)
     st.dataframe(rows, hide_index=True, height=260)
     if len(rows) > 1:
         frame = pd.DataFrame(rows).set_index("Lượt")

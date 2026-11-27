@@ -169,8 +169,12 @@ class TestStage5Trainer(unittest.TestCase):
             def save_wrapper(*args, **kwargs):
                 events.append("save")
 
+            # Keep this mocked orchestration test independent of real checkpoints.
+            output_dir = tempfile.TemporaryDirectory()
+            self.addCleanup(output_dir.cleanup)
             config = Stage5TrainConfig(
                 stage4_checkpoint="mock-stage4.pt",
+                output_dir=output_dir.name,
                 seed=17,
                 iterations=2,
                 games_per_iteration=5,

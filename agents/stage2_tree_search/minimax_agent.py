@@ -55,3 +55,51 @@ class MinimaxAgent(BaseAgent):
                 best, chosen = score, move
         self.last_score = best
         return chosen
+
+    def _timed_search(self, position, depth, limits, ply=0):
+        limits.check()
+        self.nodes_visited += 1
+        terminal = terminal_score(position, self.claim_draw, ply)
+        if terminal is not None:
+            return terminal
+        if depth == 0:
+            return evaluate_relative(position, check_terminal=False)
+        best = -INF
+        for move in list(position.legal_moves):
+            position.push(move)
+            try:
+                best = max(best, -self._timed_search(position, depth - 1, limits, ply + 1))
+            finally:
+                position.pop()
+        return best
+
+    def _timed_root(self, position, moves, depth, limits):
+        best, chosen = -INF, moves[0]
+        for move in moves:
+            limits.check()
+            position.push(move)
+            try:
+                score = -self._timed_search(position, depth - 1, limits, 1)
+            finally:
+                position.pop()
+            if score > best:
+                best, chosen = score, move
+        return chosen, best
+
+    def act_timed(self, board, limits):
+        """Publish only completed iterations; partial deeper scores are discarded."""
+        moves = board.get_legal_actions()
+        if not moves or board.is_terminal():
+            raise ValueError("No actions: terminal position")
+        self.nodes_visited = 0
+        if hasattr(self, "cutoffs"):
+            self.cutoffs = 0
+        self.claim_draw = board.claim_draw
+        position = board.board.copy(stack=True)
+        for depth in range(1, self.depth + 1):
+            limits.check()
+            chosen, score = self._timed_root(position, moves, depth, limits)
+            self.last_score = score
+            limits.publish(chosen, completed_depth=depth, nodes_visited=self.nodes_visited,
+                           last_score=score, cutoffs=getattr(self, "cutoffs", 0))
+        return limits.best_move

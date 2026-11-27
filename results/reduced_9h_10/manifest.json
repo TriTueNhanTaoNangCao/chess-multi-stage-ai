@@ -1,0 +1,166 @@
+{
+  "config": {
+    "schema_version": 1,
+    "seed": 42,
+    "games_per_pair": 10,
+    "max_plies": 300,
+    "claim_draw": true,
+    "device": "cpu",
+    "torch_threads": 2,
+    "move_timeout_seconds": 120,
+    "startup_timeout_seconds": 300,
+    "openings_file": "thực nghiệm/chess/openings_100.json",
+    "output_dir": "results/neural_200",
+    "agents": [
+      {
+        "id": "random",
+        "key": "random",
+        "kwargs": {}
+      },
+      {
+        "id": "think1",
+        "key": "think1",
+        "kwargs": {}
+      },
+      {
+        "id": "think2",
+        "key": "think2",
+        "kwargs": {}
+      },
+      {
+        "id": "think3",
+        "key": "think3",
+        "kwargs": {}
+      },
+      {
+        "id": "minimax",
+        "key": "minimax",
+        "kwargs": {
+          "depth": 2
+        }
+      },
+      {
+        "id": "alphabeta",
+        "key": "alphabeta",
+        "kwargs": {
+          "depth": 2,
+          "q_depth": 6,
+          "use_quiescence": true
+        }
+      },
+      {
+        "id": "mcts_pure",
+        "key": "mcts_pure",
+        "kwargs": {
+          "simulations": 100,
+          "max_rollout_depth": 30
+        }
+      },
+      {
+        "id": "supervised",
+        "key": "supervised",
+        "kwargs": {
+          "checkpoint": "checkpoints/stage4/best_lichess.pt"
+        }
+      },
+      {
+        "id": "rl_policy",
+        "key": "rl_policy",
+        "kwargs": {
+          "checkpoint": "checkpoints/stage5/last.pt"
+        }
+      },
+      {
+        "id": "alphago",
+        "key": "alphago",
+        "kwargs": {
+          "checkpoint_policy": "checkpoints/stage6/policy.pt",
+          "checkpoint_value": "checkpoints/stage6/value.pt",
+          "simulations": 100,
+          "rollout_weight": 0.5,
+          "max_rollout_depth": 15
+        }
+      },
+      {
+        "id": "alphazero",
+        "key": "alphazero",
+        "kwargs": {
+          "checkpoint": "checkpoints/stage7/stage7/best.pt",
+          "simulations": 100,
+          "temperature": 0.0,
+          "add_noise": false
+        }
+      }
+    ],
+    "openings": [
+      [
+        "e2e4",
+        "e7e5",
+        "e1e2",
+        "f8b4",
+        "g1f3",
+        "f7f6",
+        "d2d4",
+        "f6f5"
+      ],
+      [
+        "e2e4",
+        "c7c5",
+        "c2c3",
+        "b8a6",
+        "d2d3",
+        "a8b8",
+        "g1e2",
+        "b8a8"
+      ],
+      [
+        "e2e4",
+        "e7e6",
+        "g2g4",
+        "b8a6",
+        "d1f3",
+        "c7c5",
+        "f3g2",
+        "d8c7"
+      ],
+      [
+        "e2e4",
+        "c7c6",
+        "g2g4",
+        "d8c7",
+        "b2b4",
+        "f7f5",
+        "f1h3",
+        "e8d8"
+      ],
+      [
+        "d2d4",
+        "d7d5",
+        "c1f4",
+        "b7b5",
+        "d1c1",
+        "a7a6",
+        "b1c3",
+        "g8f6"
+      ]
+    ],
+    "mode": "reduced_time_budget"
+  },
+  "checkpoint_sha256": {
+    "supervised.checkpoint": "28e3c34619255796fc58a2006e7869a533812046a3b52366e8d8fe3925d7d464",
+    "rl_policy.checkpoint": "4d70697035064bfc4be2e505959bb070d4a3afd0c697390b78908605016e1832",
+    "alphago.checkpoint_policy": "4d70697035064bfc4be2e505959bb070d4a3afd0c697390b78908605016e1832",
+    "alphago.checkpoint_value": "93dd82049962b4e8f9c94927879a766ba10fc914f9474dda6a794b3f88ca07ca",
+    "alphazero.checkpoint": "6c8e5302898c2eb6889890aacf09845215a1d1f79814b91a14267302f74b4ca8"
+  },
+  "source_sha256": "b4fa4b6bb7be1f598a95553bacd0c462e928db8f1d1170cf477bee5fb53c43e5",
+  "environment": {
+    "chess": "1.11.2",
+    "numpy": "2.5.4",
+    "torch": "2.14.1",
+    "python": "3.13.7",
+    "platform": "Windows-10-10.0.19045-SP0"
+  },
+  "budget_runner_sha256": "0b033aaf9ec6f774d73aa2423ab3c8e3d8f8d55de02800d26cc919c437206dcb",
+  "fingerprint": "c7fb50dc968bc65ee6e7611ccf5965b05d2c9b215c5bf404c67c7574cb2173df"
+}

@@ -1,0 +1,28 @@
+{
+  "mode": "reduced_classic_and_cross",
+  "pair_scope": "classic_internal_and_cross",
+  "completed_games": 490,
+  "expected_games": 490,
+  "classic_internal_games": 210,
+  "cross_games": 280,
+  "pairs_with_results": 49,
+  "expected_pairs": 49,
+  "min_games_per_covered_pair": 10,
+  "complete": true,
+  "clean": true,
+  "color_balanced": true,
+  "reused_games": 130,
+  "error_games": 0,
+  "timeout_games": 0,
+  "fingerprint": "c3a021c634b5f526aa9d0d337b7332471d494f1ee4a6d22c3d26d6e7eeef07d4",
+  "percent_unit": "0..100",
+  "checkpoint_sha256": {
+    "supervised.checkpoint": "28e3c34619255796fc58a2006e7869a533812046a3b52366e8d8fe3925d7d464",
+    "rl_policy.checkpoint": "4d70697035064bfc4be2e505959bb070d4a3afd0c697390b78908605016e1832",
+    "alphago.checkpoint_policy": "4d70697035064bfc4be2e505959bb070d4a3afd0c697390b78908605016e1832",
+    "alphago.checkpoint_value": "93dd82049962b4e8f9c94927879a766ba10fc914f9474dda6a794b3f88ca07ca",
+    "alphazero.checkpoint": "6c8e5302898c2eb6889890aacf09845215a1d1f79814b91a14267302f74b4ca8"
+  },
+  "paired_games_are_not_independent": true,
+  "acceptance": "COMPLETE_REDUCED_SELECTED"
+}

@@ -1,3 +1,5 @@
+> Kết quả hoặc đề xuất cũ (trước 24/11/2026): không dùng cho báo cáo cuối.
+
 # Báo cáo Nghiệm thu Stage 7: AlphaZero (Dual-Head ResNet + PUCT + Self-Play)
 
 **Người thực hiện:** Tùng  

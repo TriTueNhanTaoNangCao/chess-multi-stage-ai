@@ -42,9 +42,19 @@ AGENT_REGISTRY = {
 }
 
 
-def build_agent(key, depth=None, seed=None, *, checkpoint=None, device="cpu"):
+def build_agent(key, depth=None, seed=None, *, checkpoint=None, device="cpu", move_time_limit_seconds=None):
     if key not in AGENT_REGISTRY:
         raise KeyError(f"Unknown agent key: {key}. Available: {list(AGENT_REGISTRY.keys())}")
+    if move_time_limit_seconds is not None:
+        from services.search_worker import TimedAgent
+        agent = TimedAgent(("factory", dict(key=key, depth=depth, seed=seed, checkpoint=checkpoint, device=device)),
+                           move_time_limit_seconds, name=f"{key}" + (f":{depth}" if key in ("minimax", "alphabeta") else "") + f" · ≤{move_time_limit_seconds:g}s")
+        try:
+            agent.prepare()
+        except BaseException:
+            agent.close()
+            raise
+        return agent
     cls = AGENT_REGISTRY[key]
     if key in CHECKPOINT_REQUIRED_AGENTS:
         if not checkpoint:

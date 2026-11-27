@@ -90,3 +90,69 @@ class AlphaBetaAgent(MinimaxAgent):
                 alpha, chosen = score, move
         self.last_score = alpha
         return chosen
+
+    def _timed_quiescence(self, position, alpha, beta, limits, remaining, ply):
+        limits.check()
+        self.nodes_visited += 1
+        terminal = terminal_score(position, self.claim_draw, ply)
+        if terminal is not None:
+            return terminal
+        in_check = position.is_check()
+        if not in_check:
+            stand_pat = evaluate_relative(position, check_terminal=False)
+            if remaining <= 0:
+                return stand_pat
+            if stand_pat >= beta:
+                return stand_pat
+            alpha = max(alpha, stand_pat)
+        moves = [m for m in position.legal_moves if in_check or position.is_capture(m) or m.promotion]
+        for move in self._order_moves(position, moves):
+            limits.check()
+            position.push(move)
+            try:
+                if remaining <= 0:
+                    child = terminal_score(position, self.claim_draw, ply + 1)
+                    score = -(child if child is not None else evaluate_relative(position, check_terminal=False))
+                else:
+                    score = -self._timed_quiescence(position, -beta, -alpha, limits, remaining - 1, ply + 1)
+            finally:
+                position.pop()
+            if score >= beta:
+                self.cutoffs += 1
+                return score
+            alpha = max(alpha, score)
+        return alpha
+
+    def _timed_search(self, position, depth, limits, ply=0, alpha=-INF, beta=INF):
+        limits.check()
+        self.nodes_visited += 1
+        terminal = terminal_score(position, self.claim_draw, ply)
+        if terminal is not None:
+            return terminal
+        if depth == 0:
+            return (self._timed_quiescence(position, alpha, beta, limits, self.q_depth, ply)
+                    if self.use_quiescence else evaluate_relative(position, check_terminal=False))
+        for move in self._order_moves(position, list(position.legal_moves)):
+            position.push(move)
+            try:
+                score = -self._timed_search(position, depth - 1, limits, ply + 1, -beta, -alpha)
+            finally:
+                position.pop()
+            if score >= beta:
+                self.cutoffs += 1
+                return score
+            alpha = max(alpha, score)
+        return alpha
+
+    def _timed_root(self, position, moves, depth, limits):
+        alpha, chosen = -INF, moves[0]
+        for move in self._order_moves(position, moves):
+            limits.check()
+            position.push(move)
+            try:
+                score = -self._timed_search(position, depth - 1, limits, 1, -INF, -alpha)
+            finally:
+                position.pop()
+            if score > alpha:
+                alpha, chosen = score, move
+        return chosen, alpha

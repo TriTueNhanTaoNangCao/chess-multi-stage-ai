@@ -141,6 +141,8 @@ Chữ ký factory ở mục này là **thiết kế cần thực hiện khi có 
 
 ## 7. Lịch đánh giá cuối đề xuất (chưa chạy)
 
+> Đề xuất này (300 ply) đã được thay bằng arena 400 ply; không chạy theo lịch này.
+
 - Mỗi Policy B16/Paper đấu riêng Random, Think3 one-ply, AlphaBeta depth 3 với
   quiescence depth 6, và Pure MCTS 200 simulations, `c=1.414`, rollout depth 30.
 - Dùng đúng 50 openings theo thứ tự trong báo cáo batch; mỗi opening chơi hai
